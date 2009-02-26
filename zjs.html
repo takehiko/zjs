@@ -10,7 +10,7 @@ body {background-color:black;}
 #readme {background-color:#c96; padding:1ex; font-size:small}
 .minsecform {text-align:right}
 </style>
-<script type='text/javascript'>
+<script type="text/javascript">
 //////// 自由に書き換えてください:ここから ////////
 var bell = new Array({
   // [0] 予鈴1
@@ -104,6 +104,7 @@ var scrHeight; // 画面高さ
 var myInterval = null; // setInterval保存
 var debugMode = false; // デバッグモード
 var readmeToggle = false; // readmeを表示しているならtrue
+var timeTypeEsc = null; // Escapeを押した時刻(2度押しリセット用)
 
 // スタイル変更
 function changeStyle(id, style, value) {
@@ -378,6 +379,25 @@ function displayReadme() {
   readmeToggle = !readmeToggle;
   document.getElementById("readme").style.display = (readmeToggle ? "block" : "none");
 }
+
+// キーイベント
+document.addEventListener("keyup", function(e) {
+  if (e.keyCode == 32) { // スペース: 開始/停止/再開
+    toggleClock();
+  } else if (e.keyCode == 27) { // Escape: 停止時2度押しでリセット
+    if (!clockTick) {
+      var t = (new Date()).getTime();
+      if (timeTypeEsc != null && t - timeTypeEsc <= 1000) {
+        resetClock();
+        timeTypeEsc = null;
+      } else {
+        timeTypeEsc = t;
+      }
+    }
+    // stopClock();
+    // resetClock();
+  }
+}, false);
 </script>
 </head>
 <body onload="init()" onresize="changeFontSize()">
@@ -434,7 +454,8 @@ function displayReadme() {
   <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま〜 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
   <li>分秒の数字の大きさは、ブラウザウィンドウのサイズに依存します。ウィンドウサイズを変えると、ただちに変わります。</li>
   <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
-  <li>このファイル単体で動きますが、ベルのwavファイルを用意すれば、音を鳴らすこともできます。</li>
+  <li>このファイル単体で動きますが、ベルのwavファイルを用意し，ブラウザで再生するためのプラグインを入れるなど(例えば、Firefox+QuickTime)すれば、音を鳴らすこともできます。</li>
+  <li>スペースバーでも開始/停止/再開できます。停止時にEscキー2度押しで、リセットします。</li>
   <li>「座長のjs」と名付けました。jsはもちろんJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ているとも思いまして。</li>
 </ul>
 </div>
