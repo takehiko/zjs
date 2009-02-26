@@ -123,14 +123,14 @@ var titleArray = new Array( // タイトルバー
 
 var debugMode = false; // trueならデバッグモード
 var noRing = false; // trueならベルを鳴らさない
-var noKey = false; // trueならキー入力(z,xなど)無効
+var noKey = false; // trueならキー入力([Z]など)無効
 var noMouseOnClock = true; // trueなら時間の上のクリック(開始/停止/再開)無効
 var noChangeTitle = false; // trueならタイトルバーは「座長のjs」固定
 
 var bellwav = new Array(null, "chime1.wav", "chime2.wav", "chime3.wav"); // ベルのファイル
 
-var digitScale = 0.21; // 文字表示の拡大率(ウィンドウ幅に対する割合; 0は拡大しない)
-var minsecLabelScale = 0.03; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合; 0は拡大しない)
+var digitScale = 21; // 文字表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
+var minsecLabelScale = 3; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
 //////// 自由に書き換えてください:ここまで ////////
 
 var clockTick = false; // 時計が進んでいるならtrue
@@ -255,13 +255,13 @@ function changeFontSize() {
   }
 
   if (digitScale > 0) {
-    var fs = scrWidth * digitScale;
+    var fs = scrWidth * digitScale * 0.01;
     changeStyle("timemin", "fontSize", "" + fs + "pt");
     changeStyle("timesec", "fontSize", "" + fs + "pt");
   }
 
   if (minsecLabelScale > 0) {
-    var fs = scrWidth * minsecLabelScale;
+    var fs = scrWidth * minsecLabelScale * 0.01;
     changeStyle("timeminlabel", "fontSize", "" + fs + "pt");
     changeStyle("timeseclabel", "fontSize", "" + fs + "pt");
     changeStyle("timestatus", "fontSize", "" + fs + "pt");
@@ -471,9 +471,9 @@ function eventKeyUp(e) {
     code =  e.which;
   }
 
-  if (code == 32 || code == 90) { // SPC, z: 開始/停止/再開
+  if (code == 32 || code == 90) { // [SPC], [Z]: 開始/停止/再開
     toggleClock();
-  } else if (code == 27 || code == 88) { // Esc, x: 停止時2度押しでリセット
+  } else if (code == 27 || code == 88) { // [Esc], [X]: 停止時2度押しでリセット
     if (!clockTick) {
       var t = (new Date()).getTime();
       if (timeTypeEsc != null && t - timeTypeEsc <= 1000) {
@@ -483,10 +483,20 @@ function eventKeyUp(e) {
         timeTypeEsc = t;
       }
     }
-  } else if (code == 72) { // h: 「はじめにお読みください」の表示/非表示
+  } else if (code == 72) { // [H]: 「はじめにお読みください」の表示/非表示
     displayReadme();
-  } else if (code == 56 || code == 104) { // 8: 時間表示切替
+  } else if (code == 56 || code == 104) { // [8]: 時間表示切替
     toggleTimeColorLabel();
+  } else if (code == 77) { // [M]: 数字拡大
+    digitScale++;
+    changeFontSize();
+    updateClock();
+  } else if (code == 78) { // [N]: 数字縮小
+    if (digitScale > 1) {
+      digitScale--;
+      changeFontSize();
+      updateClock();
+    }
   }
 }
 </script>
