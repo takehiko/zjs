@@ -89,7 +89,8 @@ timeColorLabelArray = new Array({
 var bellwav = new Array(null, "chime1.wav", "chime2.wav", "chime3.wav"); // ベルのファイル
 // var bellwav = new Array(); // ベルのファイル(ベルを鳴らさないとき)
 
-var digitScale = 0.24; // 文字表示の拡大率(ウィンドウ幅に対する割合; 0は拡大しない)
+var digitScale = 0.21; // 文字表示の拡大率(ウィンドウ幅に対する割合; 0は拡大しない)
+var minsecLabelScale = 0.03; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合; 0は拡大しない)
 //////// 自由に書き換えてください:ここまで ////////
 
 var timeStatus = "hold"; // 時刻状態("hold", "tick")
@@ -100,7 +101,6 @@ var timeColor = timeColorLabelArray[0].timeColor; // 時刻表示の色
 var statusLabel = timeColorLabelArray[0].statusLabel; // 時計状態の表示内容
 var scrWidth; // 画面幅
 var scrHeight; // 画面高さ
-var timeFontSize; // 分秒のフォントサイズ
 var myInterval = null; // setInterval保存
 var debugMode = false; // デバッグモード
 var readmeToggle = false; // readmeを表示しているならtrue
@@ -193,9 +193,16 @@ function changeFontSize() {
   }
 
   if (digitScale > 0) {
-    timeFontSize = scrWidth * digitScale;
-    changeStyle("timemin", "fontSize", "" + timeFontSize + "pt");
-    changeStyle("timesec", "fontSize", "" + timeFontSize + "pt");
+    var fs = scrWidth * digitScale;
+    changeStyle("timemin", "fontSize", "" + fs + "pt");
+    changeStyle("timesec", "fontSize", "" + fs + "pt");
+  }
+
+  if (minsecLabelScale > 0) {
+    var fs = scrWidth * minsecLabelScale;
+    changeStyle("timeminlabel", "fontSize", "" + fs + "pt");
+    changeStyle("timeseclabel", "fontSize", "" + fs + "pt");
+    changeStyle("timestatus", "fontSize", "" + fs + "pt");
   }
 }
 
@@ -281,7 +288,7 @@ function updateClock() {
 
 function doRing(wavfile) {
   if (wavfile) {
-    document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" src=\"" + wavfile + "\" autostart=\"true\" hidden=\"true\">";
+    document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" src=\"" + wavfile + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
   }
 }
 
@@ -365,10 +372,9 @@ function displayReadme() {
 </script>
 </head>
 <body onload="init()" onresize="changeFontSize()">
-<div id="sound"></div>
 <div id="debugmessage" style="color:#ff6;font-weight:bold;display:none"></div>
 <div id="timestatus" style="color:#ff6;font-weight:bold">停止中</div>
-<div id="time" style="color:#0f0;font-weight:bold;text-align:center"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span>秒</div>
+<div id="time" style="color:#0f0;font-weight:bold;text-align:center"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
 <div id="button">
 <input type="button" value="開始" onClick="startClock()"id="buttonstart" style="display:inline">
 <input type="button" value="停止" onClick="stopClock()" id="buttonstop" style="display:none">
@@ -424,5 +430,6 @@ function displayReadme() {
 </ul>
 </div>
 </div>
+<div id="sound"></div>
 </body>
 </html>
