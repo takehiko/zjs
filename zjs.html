@@ -93,7 +93,7 @@ var digitScale = 0.21; // 文字表示の拡大率(ウィンドウ幅に対す�
 var minsecLabelScale = 0.03; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合; 0は拡大しない)
 //////// 自由に書き換えてください:ここまで ////////
 
-var timeStatus = "hold"; // 時刻状態("hold", "tick")
+var clockTick = false; // 時計が進んでいるならtrue
 var etime1; // 経過時間1(ミリ秒)
 var etime2; // 経過時間2(ミリ秒; 停止ボタンで0になる)
 var timeStart; // 計測開始時刻
@@ -133,7 +133,7 @@ function setTimeColor() {
 
   timeColor = timeColorLabelArray[timeColorLabelIndex].timeColor;
   statusLabel = timeColorLabelArray[timeColorLabelIndex].statusLabel;
-  if (timeColorLabelIndex != 0 && timeStatus == "hold") {
+  if (timeColorLabelIndex != 0 && !clockTick) {
     statusLabel = timeColorLabelArray[0].statusLabel;
   }
 
@@ -208,7 +208,7 @@ function changeFontSize() {
 
 // 計時開始
 function startClock() {
-  if (timeStatus == "hold") {
+  if (!clockTick) {
     myInterval = setInterval("updateClock()", 100);
     timeStart = (new Date()).getTime();
     doTick();
@@ -220,7 +220,7 @@ function startClock() {
 
 // 計時停止
 function stopClock() {
-  if (timeStatus == "tick") {
+  if (clockTick) {
     doHold();
     if (myInterval != null) {
       clearInterval(myInterval);
@@ -242,9 +242,18 @@ function stopClock() {
   }
 }
 
+// 計時開始/停止
+function toggleClock() {
+  if (clockTick) {
+    stopClock();
+  } else {
+    startClock();
+  }
+}
+
 // 計時リセット
 function resetClock() {
-  if (timeStatus == "hold") {
+  if (!clockTick) {
     for (var i = 0; i <= 3; i++) {
       if (bell[i].ring == 2) {
         bell[i].ring = 1;
@@ -280,27 +289,27 @@ function updateClock() {
       bell[i].ring = 2;
       setTimeColor();
       if (bell[i].wavtype > 0) {
-        doRing(bellwav[bell[i].wavtype]);
+        doRing(bell[i].wavtype);
       }
     }
   }
 }
 
-function doRing(wavfile) {
-  if (wavfile) {
-    document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" src=\"" + wavfile + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
+function doRing(wavid) {
+  if (wavid != null && wavid > 0) {
+    document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" type=\"audio/wav\" src=\"" + bellwav[wavid] + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
   }
 }
 
 // 時間を止める
 function doHold() {
-  timeStatus = "hold";
+  clockTick = false;
   document.getElementById("config").style.display = "block";
 }
 
 // 時間を動かす
 function doTick() {
-  timeStatus = "tick";
+  clockTick = true;
   document.getElementById("config").style.display = "none";
 }
 
@@ -373,8 +382,8 @@ function displayReadme() {
 </head>
 <body onload="init()" onresize="changeFontSize()">
 <div id="debugmessage" style="color:#ff6;font-weight:bold;display:none"></div>
-<div id="timestatus" style="color:#ff6;font-weight:bold">停止中</div>
-<div id="time" style="color:#0f0;font-weight:bold;text-align:center"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
+<div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="resetClock()">停止中</div>
+<div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="toggleClock()"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
 <div id="button">
 <input type="button" value="開始" onClick="startClock()"id="buttonstart" style="display:inline">
 <input type="button" value="停止" onClick="stopClock()" id="buttonstop" style="display:none">
@@ -414,9 +423,9 @@ function displayReadme() {
   </tr>
   <tr id="belltest">
     <td colspan="4">
-      <input type="button" value="ベル1" onClick="doRing(bellwav[1])">
-      <input type="button" value="ベル2" onClick="doRing(bellwav[2])">
-      <input type="button" value="ベル3" onClick="doRing(bellwav[3])">
+      <input type="button" value="ベル1" onClick="doRing(1)">
+      <input type="button" value="ベル2" onClick="doRing(2)">
+      <input type="button" value="ベル3" onClick="doRing(3)">
     </td>
   </tr>
 </table>
