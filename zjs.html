@@ -8,6 +8,7 @@
 body {background-color:black;}
 #config table {background-color:#cc9; padding:1ex}
 #readme {background-color:#c96; padding:1ex; font-size:small}
+#log {background-color:#6c9; padding:1ex; font-size:small}
 .minsecform {text-align:right}
 </style>
 <script type="text/javascript">
@@ -136,6 +137,7 @@ var minsecLabelScale = 3; // 「分」「秒」表示の拡大率(ウィンド�
 var clockTick = false; // 時計が進んでいるならtrue
 var etime1; // 経過時間1(ミリ秒)
 var etime2; // 経過時間2(ミリ秒; 停止ボタンで0になる)
+var etimeLastMark; // 経過時間(ミリ秒; 前回記録した時間)
 var timeStart; // 計測開始時刻
 var timeColorLabelArrayArray = new Array(timeColorLabelArray1, timeColorLabelArray2);
 var timeColorLabelArrayIndex = 0; // 時刻表示モード(0,1)
@@ -147,6 +149,9 @@ var scrHeight; // 画面高さ
 var myInterval = null; // setInterval保存
 var readmeToggle = false; // readmeを表示しているならtrue
 var timeTypeEsc = null; // Escapeを押した時刻(2度押しリセット用)
+var logMessage = ""; // ログメッセージ(HTML)
+var logToggle = false; // logを表示しているならtrue
+var countMark = 0; // 経過時間の記録回数
 
 // スタイル変更
 function changeStyle(id, style, value) {
@@ -214,6 +219,15 @@ function displayTime(etime) {
   }
 }
 
+// ログに出力する
+function log(message, flag) {
+  if (flag) {
+    message += " (" + (new Date()).toLocaleString() + ")";
+  }
+  logMessage += message + "<br>\n";
+  document.getElementById("log").innerHTML = logMessage;
+}
+
 // 初期化
 function init() {
   if (debugMode) { // デバッグモード
@@ -271,6 +285,10 @@ function changeFontSize() {
 // 計時開始
 function startClock() {
   if (!clockTick) {
+    if (etime1 == 0) {
+      log("start", true);
+    }
+
     myInterval = setInterval("updateClock()", 100);
     timeStart = (new Date()).getTime();
     doTick();
@@ -323,13 +341,51 @@ function resetClock() {
     }
     etime1 = 0;
     etime2 = 0;
+    etimeLastMark = 0;
+    countMark = 0;
     displayTime(0);
 
     document.getElementById("buttonstart").style.display = "inline";
     document.getElementById("buttonstart").value = "開始";
     document.getElementById("buttonstop").style.display = "none";
     document.getElementById("buttonreset").style.display = "inline";
+
+    log("reset", true);
   }
+}
+
+// 時間情報を文字列に変換
+function timeToString(time) {
+  var str = "";
+  var hour, min, sec, msec;
+
+  msec = time % 1000; time = (time - msec) / 1000;
+  sec = time % 60; time = (time - sec) / 60;
+  min = time % 60; time = (time - min) / 60;
+  hour = time;
+
+  if (hour > 0) {
+    str += "" + hour + "時間";
+  }
+  if (hour + min > 0) {
+    str += "" + (hour > 0 && min < 10 ? "0" : "") + min + "分";
+  }
+  if (hour + min + sec > 0) {
+    str += "" + (hour + min > 0 && sec < 10 ? "0" : "") + sec + "秒";
+  }
+  str += "" + (msec < 100 ? "0" : "") + (msec < 10 ? "0" : "") + msec;
+
+  return str;
+}
+
+// 経過時間の記録
+function markTime() {
+  var etime = getElapsedTime();
+  var laptime = etime - etimeLastMark;
+  etimeLastMark = etime;
+  countMark++;
+
+  log("" + countMark + ": " + timeToString(etime) + " (+" + timeToString(laptime) + ")");
 }
 
 // 時間表示方法の変更(引数は0または1)
@@ -348,13 +404,25 @@ function toggleTimeColorLabel() {
   changeTimeColorLabel(1 - timeColorLabelArrayIndex);
 }
 
+// 経過時間算出
+function getElapsedTime() {
+  if (clockTick) {
+    var timeStop = (new Date()).getTime();
+    etime2 = timeStop - timeStart;
+  }
+  return etime1 + etime2;
+}
+
 // 時刻更新
 function updateClock() {
+  /*
   if (clockTick) {
     var timeStop = (new Date()).getTime();
     etime2 = timeStop - timeStart;
   }
   var etime = etime1 + etime2;
+  */
+  var etime = getElapsedTime();
 
   if (debugMode) {
     document.getElementById("debugmessage").innerHTML = "etime=" + etime + ", etime1=" + etime1 + ", etime2=" + etime2;
@@ -375,6 +443,7 @@ function updateClock() {
   }
 }
 
+// ベルを鳴らす
 function doRing(wavid) {
   if (wavid != null && wavid > 0) {
     document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" type=\"audio/wav\" src=\"" + bellwav[wavid] + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
@@ -459,6 +528,12 @@ function displayReadme() {
   document.getElementById("readme").style.display = (readmeToggle ? "block" : "none");
 }
 
+// logを表示/非表示
+function displayLog() {
+  logToggle = !logToggle;
+  document.getElementById("log").style.display = (logToggle ? "block" : "none");
+}
+
 // キーイベント
 function eventKeyUp(e) {
   var code = 0;
@@ -485,6 +560,12 @@ function eventKeyUp(e) {
     }
   } else if (code == 72) { // [H]: 「はじめにお読みください」の表示/非表示
     displayReadme();
+  } else if (code == 46 || code == 110) { // [.]
+    if (clockTick) {
+      markTime(); // 経過時間の記録
+    } else {
+      displayLog(); // 「ログ」の表示/非表示
+    }
   } else if (code == 56 || code == 104) { // [8]: 時間表示切替
     toggleTimeColorLabel();
   } else if (code == 77) { // [M]: 数字拡大
@@ -541,6 +622,7 @@ function eventKeyUp(e) {
       <input type="button" value="設定を元に戻す" onclick="setForm()">
       <input type="button" value="カウント方法変更" onclick="toggleTimeColorLabel()">
       <input type="button" value="はじめにお読みください" onclick="displayReadme()">
+      <input type="button" value="ログ" onclick="displayLog()">
     </td>
   </tr>
   <tr id="belltest">
@@ -553,14 +635,17 @@ function eventKeyUp(e) {
 </table>
 <div id="readme" style="display:none">
 <ul>
-  <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま〜 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
+  <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま～ 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
   <li>マウス操作のほか、キーボードの[Z]でも開始/停止/再開できます。停止時に[X]キー2度押しで、リセットします。</li>
   <li>時間のカウント方法は2種類あり、[8]キーでも替わります。ブラウザのタイトルバーをご確認ください。</li>
   <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
+  <li>時間のカウント中に[.]（テンキー可）を押すと，カウント開始からの経過時間がログに追加されます．停止中にマウスで「ログ」のボタンを押すか，[.]（テンキー可）を押すと，ログが表示されます．発表練習の際，スライドごとの経過時間を知るのに，ご活用ください．</li>
   <li>このファイル単体で動きますが、ベルのwavファイルを用意し、ブラウザで再生するためのプラグインを入れるなど(例えば、Firefox+QuickTime)すれば、音を鳴らすこともできます。</li>
   <li>「座長のjs」と名付けました。jsはもちろんJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ているとも思いまして。</li>
   <li>githubに登録しました。このファイルの最新版と過去のいくつかのバージョンは、<a href="http://github.com/takehiko/zjs/">http://github.com/takehiko/zjs/</a> から取得可能です．</li>
 </ul>
+</div>
+<div id="log" style="display:none">
 </div>
 </div>
 <div id="sound"></div>
