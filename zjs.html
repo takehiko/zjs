@@ -370,9 +370,7 @@ function timeToString(time) {
   if (hour + min > 0) {
     str += "" + (hour > 0 && min < 10 ? "0" : "") + min + "分";
   }
-  if (hour + min + sec > 0) {
-    str += "" + (hour + min > 0 && sec < 10 ? "0" : "") + sec + "秒";
-  }
+  str += "" + (hour + min > 0 && sec < 10 ? "0" : "") + sec + "秒";
   str += "" + (msec < 100 ? "0" : "") + (msec < 10 ? "0" : "") + msec;
 
   return str;
@@ -385,7 +383,7 @@ function markTime() {
   etimeLastMark = etime;
   countMark++;
 
-  log("" + countMark + ": " + timeToString(etime) + " (+" + timeToString(laptime) + ")");
+  log("[" + countMark + "] " + timeToString(etime) + " (+" + timeToString(laptime) + ")");
 }
 
 // 時間表示方法の変更(引数は0または1)
@@ -560,7 +558,7 @@ function eventKeyUp(e) {
     }
   } else if (code == 72) { // [H]: 「はじめにお読みください」の表示/非表示
     displayReadme();
-  } else if (code == 46 || code == 110) { // [.]
+  } else if (code == 46 || code == 110 || code == 190) { // [.]
     if (clockTick) {
       markTime(); // 経過時間の記録
     } else {
