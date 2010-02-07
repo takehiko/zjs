@@ -1,0 +1,653 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="ja">
+<head>
+<mata name="author" content="takehikom">
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>座長のjs</title>
+<style type="text/css">
+body {background-color:black;}
+#config table {background-color:#cc9; padding:1ex}
+#readme {background-color:#c96; padding:1ex; font-size:small}
+#log {background-color:#6c9; padding:1ex; font-size:small}
+.minsecform {text-align:right}
+</style>
+<script type="text/javascript">
+//////// 自由に書き換えてください:ここから ////////
+var bell = new Array({ // ベルセット(デフォルト)
+  // [0] 予鈴1
+  "ring": 1,          // 0:使用しない, 1:使用する
+  "etime": 5 * 1000,  // 鳴らす時間(開始からのミリ秒)
+  "wavtype": 1        // ベルの種類
+}, {
+  // [1] 予鈴2
+  "ring": 1,          // 0:使用しない, 1:使用する
+  "etime": 10 * 1000, // 鳴らす時間(開始からのミリ秒)
+  "wavtype": 1        // ベルの種類
+}, {
+  // [2] 発表終了の鈴
+  "ring": 1,          // 1:使用する
+  "etime": 15 * 1000, // 鳴らす時間(開始からのミリ秒)
+  "wavtype": 2        // ベルの種類
+}, {
+  // [3] 討論終了の鈴
+  "ring": 1,          // 0:使用しない, 1:使用する
+  "etime": 20 * 1000, // 鳴らす時間(開始からのミリ秒)
+  "wavtype": 3        // ベルの種類
+});
+
+var bell_example = new Array({ // ベルセット(実用) "bell_example" を "bell" に変更すれば有効
+  // [0] 予鈴1
+  "ring": 1,
+  "etime": 12 * 60 * 1000, // 開始後12分で
+  "wavtype": 1             // 1鈴
+}, {
+  // [1] 予鈴2
+  "ring": 0,               // 表示しない
+  "etime": 12 * 60 * 1000,
+  "wavtype": 0
+}, {
+  // [2] 発表終了の鈴
+  "ring": 1,
+  "etime": 15 * 60 * 1000, // 開始後15分で
+  "wavtype": 2             // 2鈴
+}, {
+  // [3] 討論終了の鈴
+  "ring": 1,
+  "etime": 20 * 60 * 1000, // 開始後20分で
+  "wavtype": 3             // 3鈴
+});
+
+var timeColorLabelArray1 = new Array({ // ラベルセット1
+  // [0] 開始前
+  "timeColor": "#0f0",
+  "statusLabel": "停止中"
+}, {
+  // [1] 予鈴1まで
+  "timeColor": "#0f0",
+  "statusLabel": "発表残り時間"
+}, {
+  // [2] 予鈴2まで
+  "timeColor": "#6f0",
+  "statusLabel": "発表残り時間"
+}, {
+  // [3] 発表終了まで
+  "timeColor": "#cf0",
+  "statusLabel": "発表残り時間"
+}, {
+  // [4] 質疑中
+  "timeColor": "#ff0",
+  "statusLabel": "質疑経過時間"
+}, {
+  // [5] 質疑時間超過
+  "timeColor": "#f33",
+  "statusLabel": "質疑時間超過"
+}, {
+  // [6] 発表時間超過
+  "timeColor": "#f33",
+  "statusLabel": "発表時間超過"
+});
+
+var timeColorLabelArray2 = new Array({ // ラベルセット2
+  // [0] 開始前
+  "timeColor": "#0f0",
+  "statusLabel": "停止中"
+}, {
+  // [1] 予鈴1まで
+  "timeColor": "#0f0",
+  "statusLabel": "発表時間"
+}, {
+  // [2] 予鈴2まで
+  "timeColor": "#6f0",
+  "statusLabel": "発表時間"
+}, {
+  // [3] 発表終了まで
+  "timeColor": "#cf0",
+  "statusLabel": "発表時間"
+}, {
+  // [4] 質疑中
+  "timeColor": "#ff0",
+  "statusLabel": "質疑時間"
+}, {
+  // [5] 質疑時間超過
+  "timeColor": "#f33",
+  "statusLabel": "質疑時間超過"
+}, {
+  // [6] 発表時間超過
+  "timeColor": "#f33",
+  "statusLabel": "発表時間超過"
+});
+
+var titleArray = new Array( // タイトルバー
+  "座長のjs: 発表時間はカウントダウン、質疑時間はカウントアップ",
+  "座長のjs: 発表・質疑の合計時間をカウントアップ"
+);
+
+var debugMode = false; // trueならデバッグモード
+var noRing = false; // trueならベルを鳴らさない
+var noKey = false; // trueならキー入力([Z]など)無効
+var noMouseOnClock = true; // trueなら時間の上のクリック(開始/停止/再開)無効
+var noChangeTitle = false; // trueならタイトルバーは「座長のjs」固定
+
+var bellwav = new Array(null, "chime1.wav", "chime2.wav", "chime3.wav"); // ベルのファイル
+
+var digitScale = 21; // 文字表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
+var minsecLabelScale = 3; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
+//////// 自由に書き換えてください:ここまで ////////
+
+var clockTick = false; // 時計が進んでいるならtrue
+var etime1; // 経過時間1(ミリ秒)
+var etime2; // 経過時間2(ミリ秒; 停止ボタンで0になる)
+var etimeLastMark; // 経過時間(ミリ秒; 前回記録した時間)
+var timeStart; // 計測開始時刻
+var timeColorLabelArrayArray = new Array(timeColorLabelArray1, timeColorLabelArray2);
+var timeColorLabelArrayIndex = 0; // 時刻表示モード(0,1)
+var timeColorLabelArray = timeColorLabelArrayArray[timeColorLabelArrayIndex]; // ラベルセット
+var timeColor = timeColorLabelArray[0].timeColor; // 時刻表示の色
+var statusLabel = timeColorLabelArray[0].statusLabel; // 時計状態の表示内容
+var scrWidth; // 画面幅
+var scrHeight; // 画面高さ
+var myInterval = null; // setInterval保存
+var readmeToggle = false; // readmeを表示しているならtrue
+var timeTypeEsc = null; // Escapeを押した時刻(2度押しリセット用)
+var logMessage = ""; // ログメッセージ(HTML)
+var logToggle = false; // logを表示しているならtrue
+var countMark = 0; // 経過時間の記録回数
+
+// スタイル変更
+function changeStyle(id, style, value) {
+  var obj = document.getElementById(id);
+  if (obj) {
+    obj.style[style] = value;
+  }
+}
+
+// 時刻表示の色変更
+function setTimeColor() {
+  var timeColorLabelStatus;
+
+  // bell[?].ring は 0:使用しない, 1:まだ鳴らしていない, 2:すでに鳴らした
+  if (bell[3].ring == 2) {
+    timeColorLabelStatus = 5;
+  } else if (bell[2].ring == 2) {
+    timeColorLabelStatus = (bell[3].ring == 0 ? 6 : 4);
+  } else if (bell[1].ring == 2) {
+    timeColorLabelStatus = 3;
+  } else if (bell[0].ring == 2) {
+    timeColorLabelStatus = 2;
+  } else if (etime1 + etime2 > 0) {
+    timeColorLabelStatus = 1;
+  } else {
+    timeColorLabelStatus = 0;
+  }
+
+  timeColor = timeColorLabelArray[timeColorLabelStatus].timeColor;
+  statusLabel = timeColorLabelArray[timeColorLabelStatus].statusLabel;
+  if (timeColorLabelStatus != 0 && !clockTick) {
+    statusLabel = timeColorLabelArray[0].statusLabel;
+  }
+
+  changeStyle("time", "color", timeColor);
+  document.getElementById("timestatus").innerHTML = statusLabel;
+  changeStyle("timestatus", "color", timeColor);
+}
+
+// 時計表示
+function displayTime(etime) {
+  var dtime; // 経過時間(ミリ秒)
+
+  if (timeColorLabelArrayIndex == 1) {
+    dtime = etime; // 経過時間
+  } else if (etime <= bell[2].etime) {
+    dtime = bell[2].etime - etime; // 発表残り時間(ミリ秒)
+  } else {
+    dtime = etime - bell[2].etime; // 討論経過時間(ミリ秒)
+  }
+  var esec = Math.floor(dtime / 1000); // 表示する秒
+  var emin = Math.floor(esec / 60); // 表示する分
+  esec = esec % 60;
+
+  eminStr = (emin < 10 ? "0" : "") + emin;
+  esecStr = (esec < 10 ? "0" : "") + esec;
+  document.getElementById("timemin").innerHTML = eminStr;
+  document.getElementById("timesec").innerHTML = esecStr;
+  setTimeColor();
+
+  if (etime % 1000 >= 600) {
+    changeStyle("timeminlabel", "color", "black");
+  } else {
+    changeStyle("timeminlabel", "color", timeColor);
+  }
+}
+
+// ログに出力する
+function log(message, flag) {
+  if (flag) {
+    message += " (" + (new Date()).toLocaleString() + ")";
+  }
+  logMessage += message + "<br>\n";
+  document.getElementById("log").innerHTML = logMessage;
+}
+
+// 初期化
+function init() {
+  if (debugMode) { // デバッグモード
+    document.getElementById("debugmessage").style.display = "block";
+  }
+  if (noRing) { // ベルを鳴らさない
+    bellwav = new Array();
+  }
+  if (!noKey) { // キー入力有効
+    document.onkeyup = eventKeyUp;
+  }
+  if (noMouseOnClock) { // 時間の上のクリック無効
+    document.getElementById("time").onclick = null;
+  }
+  if (!bellwav[1]) { // ベルを鳴らさないときは，ベル関連のボタンを表示しない
+    document.getElementById("belltest").style.display = "none";
+  }
+
+  for (var i = 0; i <= 3; i++) {
+    if (bell[i].ring == 0) {
+      document.getElementById("timetr" + i).style.display = "none";
+    }
+  }
+
+  changeFontSize();
+  doHold();
+  changeTimeColorLabel(timeColorLabelArrayIndex);
+  resetClock();
+  setForm();
+}
+
+// フォントサイズ変更
+function changeFontSize() {
+  var scrWidth = document.body.clientWidth;
+  var scrHeight = document.body.clientHeight;
+
+  if (debugMode) {
+    document.getElementById("debugmessage").innerHTML = "test: width=" + scrWidth + ", height=" + scrHeight;
+  }
+
+  if (digitScale > 0) {
+    var fs = scrWidth * digitScale * 0.01;
+    changeStyle("timemin", "fontSize", "" + fs + "pt");
+    changeStyle("timesec", "fontSize", "" + fs + "pt");
+  }
+
+  if (minsecLabelScale > 0) {
+    var fs = scrWidth * minsecLabelScale * 0.01;
+    changeStyle("timeminlabel", "fontSize", "" + fs + "pt");
+    changeStyle("timeseclabel", "fontSize", "" + fs + "pt");
+    changeStyle("timestatus", "fontSize", "" + fs + "pt");
+  }
+}
+
+// 計時開始
+function startClock() {
+  if (!clockTick) {
+    if (etime1 == 0) {
+      log("start", true);
+    }
+
+    myInterval = setInterval("updateClock()", 100);
+    timeStart = (new Date()).getTime();
+    doTick();
+    document.getElementById("buttonstart").style.display = "none";
+    document.getElementById("buttonstop").style.display = "inline";
+    document.getElementById("buttonreset").style.display = "none";
+  }
+}
+
+// 計時停止
+function stopClock() {
+  if (clockTick) {
+    doHold();
+    if (myInterval != null) {
+      clearInterval(myInterval);
+      myInterval = null;
+    }
+    updateClock();
+    etime1 = etime1 + etime2;
+    etime2 = 0;
+
+    document.getElementById("buttonstart").style.display = "inline";
+    document.getElementById("buttonstart").value = "再開";
+    document.getElementById("buttonstop").style.display = "none";
+    document.getElementById("buttonreset").style.display = "inline";
+    changeStyle("timeminlabel", "color", timeColor);
+
+    if (debugMode) {
+      document.getElementById("debugmessage").innerHTML = "etime1=" + etime1 + ", etime2=" + etime2;
+    }
+  }
+}
+
+// 計時開始/停止
+function toggleClock() {
+  if (clockTick) {
+    stopClock();
+  } else {
+    startClock();
+  }
+}
+
+// 計時リセット
+function resetClock() {
+  if (!clockTick) {
+    for (var i = 0; i <= 3; i++) {
+      if (bell[i].ring == 2) {
+        bell[i].ring = 1;
+      }
+    }
+    etime1 = 0;
+    etime2 = 0;
+    etimeLastMark = 0;
+    countMark = 0;
+    displayTime(0);
+
+    document.getElementById("buttonstart").style.display = "inline";
+    document.getElementById("buttonstart").value = "開始";
+    document.getElementById("buttonstop").style.display = "none";
+    document.getElementById("buttonreset").style.display = "inline";
+
+    log("reset", true);
+  }
+}
+
+// 時間情報を文字列に変換
+function timeToString(time) {
+  var str = "";
+  var hour, min, sec, msec;
+
+  msec = time % 1000; time = (time - msec) / 1000;
+  sec = time % 60; time = (time - sec) / 60;
+  min = time % 60; time = (time - min) / 60;
+  hour = time;
+
+  if (hour > 0) {
+    str += "" + hour + "時間";
+  }
+  if (hour + min > 0) {
+    str += "" + (hour > 0 && min < 10 ? "0" : "") + min + "分";
+  }
+  if (hour + min + sec > 0) {
+    str += "" + (hour + min > 0 && sec < 10 ? "0" : "") + sec + "秒";
+  }
+  str += "" + (msec < 100 ? "0" : "") + (msec < 10 ? "0" : "") + msec;
+
+  return str;
+}
+
+// 経過時間の記録
+function markTime() {
+  var etime = getElapsedTime();
+  var laptime = etime - etimeLastMark;
+  etimeLastMark = etime;
+  countMark++;
+
+  log("" + countMark + ": " + timeToString(etime) + " (+" + timeToString(laptime) + ")");
+}
+
+// 時間表示方法の変更(引数は0または1)
+function changeTimeColorLabel(index) {
+  timeColorLabelArrayIndex = index;
+  timeColorLabelArray = timeColorLabelArrayArray[timeColorLabelArrayIndex];
+  if (!noChangeTitle) {
+    document.title = titleArray[timeColorLabelArrayIndex];
+  }
+  setTimeColor();
+  updateClock();
+}
+
+// 時間表示方法の変更(トグル)
+function toggleTimeColorLabel() {
+  changeTimeColorLabel(1 - timeColorLabelArrayIndex);
+}
+
+// 経過時間算出
+function getElapsedTime() {
+  if (clockTick) {
+    var timeStop = (new Date()).getTime();
+    etime2 = timeStop - timeStart;
+  }
+  return etime1 + etime2;
+}
+
+// 時刻更新
+function updateClock() {
+  /*
+  if (clockTick) {
+    var timeStop = (new Date()).getTime();
+    etime2 = timeStop - timeStart;
+  }
+  var etime = etime1 + etime2;
+  */
+  var etime = getElapsedTime();
+
+  if (debugMode) {
+    document.getElementById("debugmessage").innerHTML = "etime=" + etime + ", etime1=" + etime1 + ", etime2=" + etime2;
+  }
+
+  // 分秒の表示変更
+  displayTime(etime);
+
+  // ベルを鳴らす
+  for (var i = 0; i <= 3; i++) {
+    if (bell[i].ring == 1 && etime >= bell[i].etime) {
+      bell[i].ring = 2;
+      setTimeColor();
+      if (bell[i].wavtype > 0) {
+        doRing(bell[i].wavtype);
+      }
+    }
+  }
+}
+
+// ベルを鳴らす
+function doRing(wavid) {
+  if (wavid != null && wavid > 0) {
+    document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" type=\"audio/wav\" src=\"" + bellwav[wavid] + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
+  }
+}
+
+// 時間を止める
+function doHold() {
+  clockTick = false;
+  document.getElementById("config").style.display = "block";
+}
+
+// 時間を動かす
+function doTick() {
+  clockTick = true;
+  document.getElementById("config").style.display = "none";
+}
+
+// 内部状態をフォームにセットする
+function setForm() {
+  for (var i = 0; i <= 3; i++) {
+    var min, sec;
+    var minsec;
+
+    switch (i) {
+    case 0:
+    case 1:
+      minsec = bell[2].etime - bell[i].etime;
+      break;
+    case 2:
+      minsec = bell[2].etime;
+      break;
+    case 3:
+      minsec = bell[i].etime - bell[2].etime;
+      break;
+    }
+    if (minsec < 0) {
+      min = sec = 0;
+    } else {
+      minsec = Math.floor(minsec / 1000);
+      min = Math.floor(minsec / 60);
+      sec = minsec % 60;
+    }
+    document.getElementById("cfgmin" + i).value = "" + min;
+    document.getElementById("cfgsec" + i).value = "" + sec;
+
+    var wavtype = bell[i].ring == 0 ? 0 : bell[i].wavtype;
+    document.getElementById("cfgwav" + i).value = "" + wavtype;
+  }
+}
+
+// 整数値を求める
+function myParseInt(value) {
+  if (value == null || value == "") {
+    return 0;
+  }
+  return parseInt(value);
+}
+
+// フォームを読み込み、内部状態にセットする
+function getForm() {
+  var minsecArray = new Array();
+  for (var i = 0; i <= 3; i++) {
+    var min = myParseInt(document.getElementById("cfgmin" + i).value);
+    var sec = myParseInt(document.getElementById("cfgsec" + i).value);
+    minsecArray[i] = min * 60 + sec;
+
+    var wavtype = myParseInt(document.getElementById("cfgwav" + i).value);
+    bell[i].wavtype = wavtype;
+    bell[i].ring = (wavtype == 0 ? 0 : 1);
+  }
+
+  bell[0].etime = (minsecArray[2] - minsecArray[0]) * 1000;
+  bell[1].etime = (minsecArray[2] - minsecArray[1]) * 1000;
+  bell[2].etime = minsecArray[2] * 1000;
+  bell[3].etime = (minsecArray[2] + minsecArray[3]) * 1000;
+}
+
+// readmeを表示/非表示
+function displayReadme() {
+  readmeToggle = !readmeToggle;
+  document.getElementById("readme").style.display = (readmeToggle ? "block" : "none");
+}
+
+// logを表示/非表示
+function displayLog() {
+  logToggle = !logToggle;
+  document.getElementById("log").style.display = (logToggle ? "block" : "none");
+}
+
+// キーイベント
+function eventKeyUp(e) {
+  var code = 0;
+
+  if (document.all) {
+    code = event.keyCode;
+  } else if (document.getElementById) {
+    code = e.keyCode ? e.keyCode : e.charCode;
+  } else if(document.layers) {
+    code =  e.which;
+  }
+
+  if (code == 32 || code == 90) { // [SPC], [Z]: 開始/停止/再開
+    toggleClock();
+  } else if (code == 27 || code == 88) { // [Esc], [X]: 停止時2度押しでリセット
+    if (!clockTick) {
+      var t = (new Date()).getTime();
+      if (timeTypeEsc != null && t - timeTypeEsc <= 1000) {
+        resetClock();
+        timeTypeEsc = null;
+      } else {
+        timeTypeEsc = t;
+      }
+    }
+  } else if (code == 72) { // [H]: 「はじめにお読みください」の表示/非表示
+    displayReadme();
+  } else if (code == 46 || code == 110) { // [.]
+    if (clockTick) {
+      markTime(); // 経過時間の記録
+    } else {
+      displayLog(); // 「ログ」の表示/非表示
+    }
+  } else if (code == 56 || code == 104) { // [8]: 時間表示切替
+    toggleTimeColorLabel();
+  } else if (code == 77) { // [M]: 数字拡大
+    digitScale++;
+    changeFontSize();
+    updateClock();
+  } else if (code == 78) { // [N]: 数字縮小
+    if (digitScale > 1) {
+      digitScale--;
+      changeFontSize();
+      updateClock();
+    }
+  }
+}
+</script>
+</head>
+<body onload="init()" onresize="changeFontSize()">
+<div id="debugmessage" style="color:#ff6;font-weight:bold;display:none"></div>
+<div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="resetClock()">停止中</div>
+<div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="toggleClock()"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
+<div id="button">
+<input type="button" value="開始" onclick="startClock()" id="buttonstart" style="display:inline">
+<input type="button" value="停止" onclick="stopClock()" id="buttonstop" style="display:none">
+<input type="button" value="リセット" onclick="resetClock()" id="buttonreset" style="display:inline">
+</div>
+<div id="config">
+<table border="0">
+  <tr id="timetr2">
+    <th>発表時間</th>
+    <td>&nbsp;</td>
+    <td><input id="cfgmin2" class="minsecform" type="text" value="15" size="6">分<input id="cfgsec2" class="minsecform" type="text" value="0" size="6">秒</td>
+    <td>　ベルの種類 <select id="cfgwav2"><option value="0">なし</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></td>
+  </tr>
+  <tr id="timetr0">
+    <th>予鈴1</th>
+    <td>発表終了</td>
+    <td><input id="cfgmin0" class="minsecform" type="text" value="3" size="6">分<input id="cfgsec0" class="minsecform" type="text" value="0" size="6">秒前</td>
+    <td>　ベルの種類 <select id="cfgwav0"><option value="0">なし</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></td>
+  </tr>
+  <tr id="timetr1">
+    <th>予鈴2</th>
+    <td>発表終了</td><td><input id="cfgmin1" class="minsecform" type="text" value="0" size="6">分<input id="cfgsec1" class="minsecform" type="text" value="0" size="6">秒前</td>
+    <td>　ベルの種類 <select id="cfgwav1"><option value="0" selected>なし</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
+  </tr>
+  <tr id="timetr3">
+    <th>討論時間</th>
+    <td>&nbsp;</td>
+    <td><input id="cfgmin3" class="minsecform" type="text" value="5" size="6">分<input id="cfgsec3" class="minsecform" type="text" value="0" size="6">秒</td>
+    <td>　ベルの種類 <select id="cfgwav3"><option value="0">なし</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></td>
+  </tr>
+  <tr>
+    <td colspan="4">
+      <input type="button" value="設定を変更する" onclick="getForm();resetClock()">
+      <input type="button" value="設定を元に戻す" onclick="setForm()">
+      <input type="button" value="カウント方法変更" onclick="toggleTimeColorLabel()">
+      <input type="button" value="はじめにお読みください" onclick="displayReadme()">
+      <input type="button" value="ログ" onclick="displayLog()">
+    </td>
+  </tr>
+  <tr id="belltest">
+    <td colspan="4">
+      <input type="button" value="ベル1" onclick="doRing(1)">
+      <input type="button" value="ベル2" onclick="doRing(2)">
+      <input type="button" value="ベル3" onclick="doRing(3)">
+    </td>
+  </tr>
+</table>
+<div id="readme" style="display:none">
+<ul>
+  <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま～ 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
+  <li>マウス操作のほか、キーボードの[Z]でも開始/停止/再開できます。停止時に[X]キー2度押しで、リセットします。</li>
+  <li>時間のカウント方法は2種類あり、[8]キーでも替わります。ブラウザのタイトルバーをご確認ください。</li>
+  <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
+  <li>時間のカウント中に[.]（テンキー可）を押すと，カウント開始からの経過時間がログに追加されます．停止中にマウスで「ログ」のボタンを押すか，[.]（テンキー可）を押すと，ログが表示されます．発表練習の際，スライドごとの経過時間を知るのに，ご活用ください．</li>
+  <li>このファイル単体で動きますが、ベルのwavファイルを用意し、ブラウザで再生するためのプラグインを入れるなど(例えば、Firefox+QuickTime)すれば、音を鳴らすこともできます。</li>
+  <li>「座長のjs」と名付けました。jsはもちろんJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ているとも思いまして。</li>
+  <li>githubに登録しました。このファイルの最新版と過去のいくつかのバージョンは、<a href="http://github.com/takehiko/zjs/">http://github.com/takehiko/zjs/</a> から取得可能です．</li>
+</ul>
+</div>
+<div id="log" style="display:none">
+</div>
+</div>
+<div id="sound"></div>
+</body>
+</html>
