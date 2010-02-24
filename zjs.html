@@ -3,7 +3,7 @@
 <head>
 <mata name="author" content="takehikom">
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>座長のjs</title>
+<title>zjs</title>
 <style type="text/css">
 body {background-color:black;}
 #config table {background-color:#cc9; padding:1ex}
@@ -119,15 +119,15 @@ var timeColorLabelArray2 = new Array({ // ラベルセット2
 });
 
 var titleArray = new Array( // タイトルバー
-  "座長のjs: 発表時間はカウントダウン、質疑時間はカウントアップ",
-  "座長のjs: 発表・質疑の合計時間をカウントアップ"
+  "zjs: 発表時間はカウントダウン、質疑時間はカウントアップ",
+  "zjs: 発表・質疑の合計時間をカウントアップ"
 );
 
 var debugMode = false; // trueならデバッグモード
 var noRing = true; // trueならベルを鳴らさない
 var noKey = false; // trueならキー入力([5]など)無効
 var noMouseOnClock = true; // trueなら時間の上のクリック(開始/停止/再開)無効
-var noChangeTitle = false; // trueならタイトルバーは「座長のjs」固定
+var noChangeTitle = false; // trueならタイトルバーは「zjs」固定
 
 var bellwav = new Array(null, "chime1.wav", "chime2.wav", "chime3.wav"); // ベルのファイル
 
@@ -155,6 +155,8 @@ var logToggle = false; // logを表示しているならtrue
 var countMark = 0; // 経過時間の記録回数
 var focusingText = false; // テキスト領域をフォーカスしていたらtrue
 var keybindToggle = false; // keybindを表示しているならtrue
+var timeTypeRing = null; // ベルキーを押した時刻(2度押し用)
+var typeRing = 0; // 押したベルキー(2度押し用)
 
 // スタイル変更
 function changeStyle(id, style, value) {
@@ -331,6 +333,9 @@ function stopClock() {
 function toggleClock() {
   if (clockTick) {
     stopClock();
+    if (countMark > 0) { // 1回以上[.]を押して経過時間を計っているときに限る
+      markLapTime(); // 経過時間（ラップタイム）の記録
+    }
   } else {
     startClock();
   }
@@ -384,13 +389,21 @@ function timeToString(time) {
 }
 
 // 経過時間の記録
-function markTime() {
+function markTime(paren) {
   var etime = getElapsedTime();
   var laptime = etime - etimeLastMark;
   etimeLastMark = etime;
   countMark++;
 
-  log("&lt;" + countMark + "&gt; " + timeToString(etime) + " (+" + timeToString(laptime) + ")", false);
+  log((paren == 0 ? "&lt;" : "[") + countMark + (paren == 0 ? "&gt; " : "] ") + timeToString(etime) + " (+" + timeToString(laptime) + ")", false);
+}
+
+// 経過時間（ラップタイム）の記録
+function markLapTime(paren) {
+  var etime = getElapsedTime();
+  var laptime = etime - etimeLastMark;
+
+  log("[Pause] " + timeToString(etime) + " (+" + timeToString(laptime) + ")", false);
 }
 
 // 時間表示方法の変更(引数は0または1)
@@ -429,13 +442,6 @@ function getElapsedTime() {
 
 // 時刻更新
 function updateClock() {
-  /*
-  if (clockTick) {
-    var timeStop = (new Date()).getTime();
-    etime2 = timeStop - timeStart;
-  }
-  var etime = etime1 + etime2;
-  */
   var etime = getElapsedTime();
 
   if (debugMode) {
@@ -611,6 +617,25 @@ function eventKeyUp(e) {
         timeTypeEsc = t;
       }
     }
+  } else if (code == 65 || code == 83 || code == 68) { // [A], [S], [D]: 2度押しでベル1～3
+    if (!noRing) {
+      var t = (new Date()).getTime();
+      if (timeTypeRing != null && t - timeTypeRing <= 1000 && typeRing == code) {
+        timeTypeRing = t;
+        typeRing = code;
+        // typeRing = 256 + code;
+        if (code == 65) {
+          doRing(1);
+        } else if (code == 83) {
+          doRing(2);
+        } else {
+          doRing(3);
+        }
+      } else {
+        timeTypeRing = t;
+        typeRing = code;
+      }
+    }
   } else if (code == 72 || code == 57 || code == 105) { // [H], [9]: 「はじめにお読みください」の表示/非表示
     if (!clockTick) {
       displayReadme();
@@ -681,7 +706,12 @@ function eventKeyUp(e) {
       <input type="button" value="設定を変更する" onclick="getForm();resetClock()">
       <input type="button" value="設定を元に戻す" onclick="setForm()">
       <input type="button" value="時間表示の切替" onclick="toggleTimeColorLabel()">
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4">
       <input type="button" value="はじめにお読みください" onclick="displayReadme()">
+      <input type="button" value="ショートカットキー" onclick="displayKeybind()">
       <input type="button" value="ログ" onclick="displayLog()">
     </td>
   </tr>
@@ -696,23 +726,23 @@ function eventKeyUp(e) {
 <div id="readme" style="display:none">
 <ul>
   <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま～ 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
-  <li>マウス操作のほか、キーボードでも様々な操作ができます。操作方法は、[7]キーを押せば表示します。</li>
-  <li>テンキーでも操作できます。多機能テンキーをご使用の際は、あらかじめ、Num Lockがオンになっているかご確認ください。</li>
+  <li>マウスのほか、キーボードでも操作ができます。テンキーをご使用の際は、あらかじめ、Num Lockがオンになっているかご確認ください。</li>
   <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
   <li>このファイル単体で動きますが、ベルのwavファイルを用意し、ブラウザで再生するためのプラグインを入れるなど（例えば、Firefox+QuickTime）<span id="readmering">すれば</span>、音を鳴らすこともできます。</li>
-  <li>「座長のjs」と名付けました。jsはもちろんJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ているとも思いまして。</li>
+  <li>「zjs」という名前の由来は、「座長の友に対抗して、座長のjs」です。jsはJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ていますよね！</li>
   <li>このファイルの最新版と過去のいくつかのバージョンは、<a href="http://github.com/takehiko/zjs/">http://github.com/takehiko/zjs/</a> から取得可能です。</li>
 </ul>
 </div><!-- id="readme" -->
 <div id="keybind" style="display:none">
 [5], [Z], [SPC]: 開始/停止/再開<br>
-[0], [X], [Esc]: 停止時2度押しでリセット<br>
+[0], [X], [Esc]: （停止時）2度押しでリセット<br>
+[A], [S], [D]: 2度押しでベル1～3<br>
 [1], [N]: 数字縮小<br>
 [3], [M]: 数字拡大<br>
-[7], [K]: キーボードによる操作方法の表示/非表示<br>
+[7], [K]: （停止時）ショートカットキーの表示/非表示<br>
 [8], [P]: 時間表示の切替<br>
 [9], [H]: 「はじめにお読みください」の表示/非表示<br>
-[.]: カウント時は，経過時間の記録．停止時は，ログの表示/非表示（発表練習でご活用ください）
+[.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。
 </div>
 <div id="log" style="display:none"></div>
 </div><!-- id="config" -->
