@@ -640,7 +640,7 @@ function eventKeyUp(e) {
     if (!clockTick) {
       displayReadme();
     }
-  } else if (code == 46 || code == 110 || code == 190) { // [.]
+  } else if (code == 46 || code == 110 || code == 190 || code == 50 || code == 98) { // [2], [.]
     if (clockTick) {
       markTime(); // 経過時間の記録
       updateTitle();
@@ -742,7 +742,7 @@ function eventKeyUp(e) {
 [7], [K]: （停止時）ショートカットキーの表示/非表示<br>
 [8], [P]: 時間表示の切替<br>
 [9], [H]: 「はじめにお読みください」の表示/非表示<br>
-[.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。
+[2], [.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。
 </div>
 <div id="log" style="display:none"></div>
 </div><!-- id="config" -->
