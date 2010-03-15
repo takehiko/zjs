@@ -1,0 +1,14 @@
+zjs - A clock register for presentation using JavaScript
+
+"zjs" is a piece of software for managing the presenter's time
+on the second time scale. It is expected to be used in academic
+meetings or thesis defenses.
+You will make full use of useful functions with your favorite
+browser such as Firefox, Internet Explorer, and Opera.
+I apologize that all the messages are written in Japanese.
+
+時間に厳格な，学会発表や，大学の卒業研究発表会などで，
+秒単位で時間を管理するためのソフトウェアです．
+発表者とタイムキーパーはもちろん，練習中の人にも便利な機能があります．
+最新のFirefox, Internet Explorer，Operaブラウザ上で動作を確認しています．
+メッセージは今のところすべて日本語です．
