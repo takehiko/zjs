@@ -22,29 +22,6 @@ var bell = new Array( // ベルセット(デフォルト)
         "wavtype": 3        // ベルの種類
     });
 
-var bell_example = new Array( // ベルセット(実用) "bell_example" を "bell" に変更すれば有効
-    {
-        // [0] 予鈴1
-        "ring": 1,
-        "etime": 12 * 60 * 1000, // 開始後12分で
-        "wavtype": 1             // 1鈴
-    }, {
-        // [1] 予鈴2
-        "ring": 0,               // 表示しない
-        "etime": 12 * 60 * 1000,
-        "wavtype": 0
-    }, {
-        // [2] 発表終了の鈴
-        "ring": 1,
-        "etime": 15 * 60 * 1000, // 開始後15分で
-        "wavtype": 2             // 2鈴
-    }, {
-        // [3] 討論終了の鈴
-        "ring": 1,
-        "etime": 20 * 60 * 1000, // 開始後20分で
-        "wavtype": 3             // 3鈴
-    });
-
 var timeColorLabelArray1 = new Array( // ラベルセット1
     {
         // [0] 開始前
@@ -297,16 +274,40 @@ function getTimeByURI() {
                 bell[0].etime = 20 * 60 * 1000;
                 bell[2].etime = 25 * 60 * 1000;
                 bell[3].etime = 30 * 60 * 1000;
-            } else { // p30: 予鈴17分, 発表終了20分, 質疑終了30分
-                bell[0].etime = 17 * 60 * 1000;
+            } else { // p30: 予鈴15分, 発表終了20分, 質疑終了30分
+                bell[0].etime = 15 * 60 * 1000;
                 bell[2].etime = 20 * 60 * 1000;
                 bell[3].etime = 30 * 60 * 1000;
             }
         }
     }
+    if (path.match(/m=?(\d\d)(\d\d)(\d\d)(\d\d)/)) {
+        // m07000810: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringMin(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
+    } else if (path.match(/m=?(\d*)[_\-, /](\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+        // m7,0,8,10: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringMin(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
+    } else if (path.match(/m=?(\d\d)(\d\d)(\d\d)/)) {
+        // m070810: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringMin(RegExp.$1, "0", RegExp.$2, RegExp.$3);
+    } else if (path.match(/m=?(\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+        // m7,8,10: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringMin(RegExp.$1, "0", RegExp.$2, RegExp.$3);
+    }
+    if (path.match(/s=?(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)/)) {
+        // s0420000004800600: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringSec(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
+    } else if (path.match(/s=?(\d*)[_\-, /](\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+        // s420,0,480,600: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringSec(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
+    } else if (path.match(/s=?(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)/)) {
+        // s042004800600: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringSec(RegExp.$1, "0", RegExp.$2, RegExp.$3);
+    } else if (path.match(/s=?(\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+        // s420,480,600: 予鈴7分, 発表終了8分, 質疑終了10分
+        setBellByStringSec(RegExp.$1, "0", RegExp.$2, RegExp.$3);
+    }
     // ToDo
-    // t0700000008001000: 予鈴7分, 発表終了8分, 質疑終了10分
-    // s420,0,480,600: 予鈴7分, 発表終了8分, 質疑終了10分
     // b1123: ベルの種類が予鈴1は1，予鈴2は1，発表終了は2，質疑終了は3
     // B1011: 予鈴1，発表終了，質疑終了でベルを鳴らす（予鈴2では鳴らさない）
 }
@@ -321,6 +322,36 @@ function presetBell() {
     bell[3].ring = 1;
     bell[3].wavtime = 3;
     //chopYorei1();
+}
+
+// 予鈴1, 予鈴2, 発表終了, 質疑終了の分（文字列）をもとにbellに設定する
+function setBellByStringMin(min1, min2, min3, min4) {
+    var secs = new Array(myParseInt(min1) * 60,
+                         myParseInt(min2) * 60,
+                         myParseInt(min3) * 60,
+                         myParseInt(min4) * 60);
+    setBellByArray(secs);
+}
+
+// 予鈴1, 予鈴2, 発表終了, 質疑終了の秒（文字列）をもとにbellに設定する
+function setBellByStringSec(sec1, sec2, sec3, sec4) {
+    var secs = new Array(myParseInt(sec1),
+                         myParseInt(sec2),
+                         myParseInt(sec3),
+                         myParseInt(sec4));
+    setBellByArray(secs);
+}
+
+// 予鈴1, 予鈴2, 発表終了, 質疑終了の秒（整数）の配列をもとにbellに設定する
+function setBellByArray(secs) {
+    for (var i = 0; i < 4; i++) {
+        bell[i].etime = secs[i] * 1000;
+        if (secs[i] == 0) {
+            bell[i].ring = 0;
+        } else {
+            bell[i].ring = 1;
+        }
+    }
 }
 
 // 「予鈴1」を「予鈴」に変更
@@ -420,6 +451,10 @@ function resetClock() {
         etimeLastMark = 0;
         countMark = 0;
         displayTime(0);
+
+        if (timeColorLabelArrayIndex == 0) {
+            changeTimeColorLabel(2);
+        }
 
         updateTitle();
         document.getElementById("buttonstart").style.display = "inline";
@@ -583,7 +618,11 @@ function setForm() {
 
 // 整数値を求める
 function myParseInt(value) {
-    if (value == null || value == "") {
+    if (value == null) {
+        return 0;
+    }
+    value = value.replace(/^0+/, "");
+    if (value == "") {
         return 0;
     }
     return parseInt(value);
@@ -624,6 +663,11 @@ function displayKeybind() {
     if (keybindToggle) {
         movePageEnd();
     }
+}
+
+// 「準備OK?」のメッセージを表示
+function showAdvice() {
+    alert("これはブラウザで動く学会タイマーです。\n数分間、何も操作しないと、画面がオフになったり、\nスクリーンセーバーが作動したりしませんか?");
 }
 
 // logを表示/非表示
@@ -679,20 +723,16 @@ function eventKeyUp(e) {
             if (timeTypeEsc != null && t - timeTypeEsc <= 1000) {
                 resetClock();
                 timeTypeEsc = null;
-                if (timeColorLabelArrayIndex == 0) {
-                    changeTimeColorLabel(2);
-                }
             } else {
                 timeTypeEsc = t;
             }
         }
-    } else if (code == 65 || code == 83 || code == 68) { // [A], [S], [D]: 2度押しでベル1箸ｷ3
+    } else if (code == 65 || code == 83 || code == 68) { // [A], [S], [D]: 2度押しでベル1, 2, 3
         if (!noRing) {
             var t = (new Date()).getTime();
             if (timeTypeRing != null && t - timeTypeRing <= 1000 && typeRing == code) {
                 timeTypeRing = t;
                 typeRing = code;
-                // typeRing = 256 + code;
                 if (code == 65) {
                     doRing(1);
                 } else if (code == 83) {
