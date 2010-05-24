@@ -299,26 +299,26 @@ function getTimeByURI() {
     if (path.match(/m=?(\d\d)(\d\d)(\d\d)(\d\d)/)) {
         // m07000810: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringMin(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
-    } else if (path.match(/m=?(\d*)[_\-, /](\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+    } else if (path.match(/m=?(\d*)[_\-, ](\d*)[_\-, ](\d*)[_\-, ](\d*)/)) {
         // m7,0,8,10: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringMin(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
     } else if (path.match(/m=?(\d\d)(\d\d)(\d\d)/)) {
         // m070810: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringMin(RegExp.$1, "0", RegExp.$2, RegExp.$3);
-    } else if (path.match(/m=?(\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+    } else if (path.match(/m=?(\d*)[_\-, ](\d*)[_\-, ](\d*)/)) {
         // m7,8,10: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringMin(RegExp.$1, "0", RegExp.$2, RegExp.$3);
     }
     if (path.match(/s=?(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)/)) {
         // s0420000004800600: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringSec(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
-    } else if (path.match(/s=?(\d*)[_\-, /](\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+    } else if (path.match(/s=?(\d*)[_\-, ](\d*)[_\-, ](\d*)[_\-, ](\d*)/)) {
         // s420,0,480,600: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringSec(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
     } else if (path.match(/s=?(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)/)) {
         // s042004800600: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringSec(RegExp.$1, "0", RegExp.$2, RegExp.$3);
-    } else if (path.match(/s=?(\d*)[_\-, /](\d*)[_\-, /](\d*)/)) {
+    } else if (path.match(/s=?(\d*)[_\-, ](\d*)[_\-, ](\d*)/)) {
         // s420,480,600: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringSec(RegExp.$1, "0", RegExp.$2, RegExp.$3);
     }
