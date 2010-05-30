@@ -1,5 +1,5 @@
 //////// 自由に書き換えてください:ここから ////////
-var bell = new Array( // ベルセット(デフォルト)
+var bell = new Array( // ベルセット
     { 
         // [0] 予鈴1
         "ring": 1,          // 0:使用しない, 1:使用する
@@ -91,15 +91,17 @@ var titleArray = new Array( // タイトルバー
 );
 
 var debugMode = false; // trueならデバッグモード
-var noRing = false; // trueならベルを鳴らさない
 var noKey = false; // trueならキー入力([5]など)無効
 var noMouseOnClock = true; // trueなら時間の上のクリック(開始/停止/再開)無効
 var noChangeTitle = false; // trueならタイトルバーは「zjs」固定
 
 var bellwav = new Array(null, "chime1.wav", "chime2.wav", "chime3.wav"); // ベルのファイル
+var noChangeBellwav = false; //trueならベルのファイル名固定．falseならsetupByURIで書き換えられる
 
 var digitScale = 21; // 文字表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
 var minsecLabelScale = 3; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
+var ringMode = null; // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用
+var userAgent = null; // ブラウザ判別用
 //////// 自由に書き換えてください:ここまで ////////
 
 var clockTick = false; // 時計が進んでいるならtrue
@@ -107,7 +109,7 @@ var etime1; // 経過時間1(ミリ秒)
 var etime2; // 経過時間2(ミリ秒; 停止ボタンで0になる)
 var etimeLastMark; // 経過時間(ミリ秒; 前回記録した時間)
 var timeStart; // 計測開始時刻
-var timeColorLabelArrayArray = new Array(timeColorLabelArray1, timeColorLabelArray2, timeColorLabelArray1);
+var timeColorLabelArrayArray = new Array(timeColorLabelArray1, timeColorLabelArray2, timeColorLabelArray1); // ラベルセットのリスト
 var timeColorLabelArrayIndex = 2; // 時刻表示モード(0,1,2)
 var timeColorLabelArray = timeColorLabelArrayArray[timeColorLabelArrayIndex]; // ラベルセット
 var timeColor = timeColorLabelArray[0].timeColor; // 時刻表示の色
@@ -124,6 +126,7 @@ var focusingText = false; // テキスト領域をフォーカスしていたら
 var keybindToggle = false; // keybindを表示しているならtrue
 var timeTypeRing = null; // ベルキーを押した時刻(2度押し用)
 var typeRing = 0; // 押したベルキー(2度押し用)
+var audioArray = new Array(null, null, null, null); // Audioオブジェクトのリスト
 
 // スタイル変更
 function changeStyle(id, style, value) {
@@ -178,8 +181,8 @@ function displayTime(etime) {
     var emin = Math.floor(esec / 60); // 表示する分
     esec = esec % 60;
 
-    eminStr = (emin < 10 ? "0" : "") + emin;
-    esecStr = (esec < 10 ? "0" : "") + esec;
+    var eminStr = (emin < 10 ? "0" : "") + emin;
+    var esecStr = (esec < 10 ? "0" : "") + esec;
     document.getElementById("timemin").innerHTML = eminStr;
     document.getElementById("timesec").innerHTML = esecStr;
     setTimeColor();
@@ -202,28 +205,26 @@ function log(message, flag) {
 
 // 初期化
 function init() {
+    setupUserAgent();
+    setupByURI();
+    setupRing();
+
     if (debugMode) { // デバッグモード
-        document.getElementById("debugmessage").style.display = "block";
+        changeStyle("debugmessage", "display", "block");
     }
-    if (noRing) { // ベルを鳴らさない
-        bellwav = new Array();
-        document.getElementById("readmering").innerHTML = "した上で、このファイルの中の「var noRing = true;」を「var noRing = false;」に書き換えれば";
-        document.getElementById("belltest").style.display = "none";
-        for (var i = 0; i <= 3; i++) {
-            document.getElementById("bellsort" + i).style.display = "none";
-        }
-    }
-    if (!noKey) { // キー入力有効
+    if (noKey) { // キー入力無効
+        document.getElementById("keybind").innerHTML = "ショートカットキーは無効です。";
+        changeStyle("readme:key", "display", "none");
+    } else { // キー入力有効
         document.onkeyup = eventKeyUp;
     }
     if (noMouseOnClock) { // 時間の上のクリック無効
         document.getElementById("time").onclick = null;
     }
-    getTimeByURI();
 
     for (var i = 0; i <= 3; i++) {
         if (bell[i].ring == 0) {
-            document.getElementById("timetr" + i).style.display = "none";
+            changeStyle("timetr" + i, "display", "none");
         }
     }
     if (bell[0].ring != 0 && bell[1].ring == 0) {
@@ -237,14 +238,44 @@ function init() {
     setForm();
 }
 
-// URIをもとに時間変更
-function getTimeByURI() {
+// ブラウザ判別
+function setupUserAgent() {
+    if (userAgent == null) {
+        var ua = navigator.userAgent;
+
+        if (ua.indexOf("Opera") >= 0) {
+            userAgent = "opera";
+        } else if (ua.indexOf("MSIE") >= 0) {
+            userAgent = "msie";
+        } else if (ua.indexOf("Firefox") >= 0) {
+            userAgent = "firefox";
+        } else if (ua.indexOf("Chrome") >= 0) {
+            userAgent = "chrome";
+        } else if (ua.indexOf("iPod") >= 0 || ua.indexOf("iPhone") >= 0 || ua.indexOf("iPad") >= 0) {
+            userAgent = "ipod";
+        } else if (ua.indexOf("Safari") >= 0) {
+            userAgent = "safari";
+        } else {
+            userAgent = "other";
+        }
+    }
+
+    if (userAgent == "ipod") {
+        noKey = true;
+        noMouseOnClock = false;
+        noChangeTitle = true;
+    }
+}
+
+// URIをもとに時間および各種設定変更
+function setupByURI() {
     // URIの最後の「/」からあとが対象
     var path = location.href;
     if (path.match(/\//)) {
         path = path.replace(/^.*\//, "");
     }
 
+    // p: よく使用する時間セット
     if (path.match(/p=?(\d+)([a-z]?)/)) {
         var num = myParseInt(RegExp.$1);
         var opt = RegExp.$2;
@@ -281,6 +312,8 @@ function getTimeByURI() {
             }
         }
     }
+
+    // m: 分単位指定
     if (path.match(/m=?(\d\d)(\d\d)(\d\d)(\d\d)/)) {
         // m07000810: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringMin(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
@@ -294,6 +327,8 @@ function getTimeByURI() {
         // m7,8,10: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringMin(RegExp.$1, "0", RegExp.$2, RegExp.$3);
     }
+
+    // s: 秒単位指定
     if (path.match(/s=?(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)(\d\d\d\d)/)) {
         // s0420000004800600: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringSec(RegExp.$1, RegExp.$2, RegExp.$3, RegExp.$4);
@@ -307,6 +342,62 @@ function getTimeByURI() {
         // s420,480,600: 予鈴7分, 発表終了8分, 質疑終了10分
         setBellByStringSec(RegExp.$1, "0", RegExp.$2, RegExp.$3);
     }
+
+    // w: ベルモード
+    if (path.match(/w=?(\d)/)) {
+        ringMode = myParseInt(RegExp.$1);
+    }
+    if (ringMode == null) {
+        /* Google ChromeはAudioがあるもののringMethod==3では鳴らない
+         * FirefoxはringMethod==2ではdoRing(1);で鳴らない
+         * MSIEはAudioがない */
+        if (userAgent == "chrome") {
+            ringMode = 2;
+        } else if (typeof(Audio) != "undefined") {
+            ringMode = 3;
+        } else {
+            ringMode = 2;
+        }
+    }
+
+    // d, b: ベルファイル
+    if (!noChangeBellwav) {
+        var bellwavDir = "";
+        var bellwavBase = "chime";
+
+        if (path.match(/d=([A-Za-z0-9\-_]+)/)) { // d=ディレクトリ名
+            bellwavDir = RegExp.$1;
+            if (!bellwavDir.match(/\/$/)) {
+                bellwavDir += "/";
+            }
+        }
+        if (path.match(/b=([A-Za-z0-9\-_]+)/)) { // b=ファイル名（[1-3].wavより前の部分）
+            bellwavBase = RegExp.$1;
+        }
+        for (var i = 1; i <= 3; i++) {
+            bellwav[i] = bellwavDir + bellwavBase + i + ".wav";
+        }
+    }
+
+    // key
+    if (path.match(/nokey/i)) { // nokey: キー入力無効
+        noKey = true;
+    } else if (path.match(/key/i)) { // key: キー入力有効
+        noKey = false;
+    }
+    // mouse
+    if (path.match(/nomouse/i)) { // nomouse: 時間の上のクリック無効
+        noMouseOnClock = true;
+    } else if (path.match(/mouse/i)) { // mouse: 時間の上のクリック有効
+        noMouseOnClock = false;
+    }
+    // debug
+    if (path.match(/nodebug/i)) { // nodebug: デバッグモード無効
+        debugMode = false;
+    } else if (path.match(/debug/i)) { // debug: デバッグモード有効
+        debugMode = true;
+    }
+
     // ToDo
     // b1123: ベルの種類が予鈴1は1，予鈴2は1，発表終了は2，質疑終了は3
     // B1011: 予鈴1，発表終了，質疑終了でベルを鳴らす（予鈴2では鳴らさない）
@@ -396,9 +487,9 @@ function startClock() {
         myInterval = setInterval("updateClock()", 100);
         timeStart = (new Date()).getTime();
         doTick();
-        document.getElementById("buttonstart").style.display = "none";
-        document.getElementById("buttonstop").style.display = "inline";
-        document.getElementById("buttonreset").style.display = "none";
+        changeStyle("buttonstart", "display", "none");
+        changeStyle("buttonstop", "display", "inline");
+        changeStyle("buttonreset", "display", "none");
     }
 }
 
@@ -414,10 +505,11 @@ function stopClock() {
         etime1 = etime1 + etime2;
         etime2 = 0;
 
-        document.getElementById("buttonstart").style.display = "inline";
+        //changeStyle("buttonstart", "value", "再開"); // うまくいかない(Firefox, Google Chromeで確認)
         document.getElementById("buttonstart").value = "再開";
-        document.getElementById("buttonstop").style.display = "none";
-        document.getElementById("buttonreset").style.display = "inline";
+        changeStyle("buttonstart", "display", "inline");
+        changeStyle("buttonstop", "display", "none");
+        changeStyle("buttonreset", "display", "inline");
         changeStyle("timeminlabel", "color", timeColor);
 
         if (debugMode) {
@@ -457,10 +549,11 @@ function resetClock() {
         }
 
         updateTitle();
-        document.getElementById("buttonstart").style.display = "inline";
+        //changeStyle("buttonstart", "value", "開始"); // うまくいかない(Firefox, Google Chromeで確認)
         document.getElementById("buttonstart").value = "開始";
-        document.getElementById("buttonstop").style.display = "none";
-        document.getElementById("buttonreset").style.display = "inline";
+        changeStyle("buttonstart", "display", "inline");
+        changeStyle("buttonstop", "display", "none");
+        changeStyle("buttonreset", "display", "inline");
         movePageTop();
 
         log("reset", true);
@@ -499,7 +592,7 @@ function markTime(paren) {
     log((paren == 0 ? "&lt;" : "[") + countMark + (paren == 0 ? "&gt; " : "] ") + timeToString(etime) + " (+" + timeToString(laptime) + ")", false);
 }
 
-// 経過時間（ラップタイム）の記録
+// 経過時間(ラップタイム)の記録
 function markLapTime(paren) {
     var etime = getElapsedTime();
     var laptime = etime - etimeLastMark;
@@ -564,23 +657,62 @@ function updateClock() {
     }
 }
 
+// ベルを鳴らすための準備をする
+function setupRing() {
+    switch (ringMode) {
+    case 0:
+        document.getElementById("readmering").innerHTML = "した上で、このファイルの中の「var ringMode = 0;」を「var ringMode = null;」に書き換えれば";
+        changeStyle("belltest", "display", "none");
+        for (var i = 0; i <= 3; i++) {
+            changeStyle("bellsort" + i, "display", "none");
+        }
+        break;
+    case 2:
+        var code = "";
+        for (var i = 1; i <= 3; i++) {
+            code += "<embed id=\"sound" + i + "\" type=\"audio/wav\" src=\"" + bellwav[i] + "\" autostart=\"false\" width=\"0\" height=\"0\" enablejavascript=\"true\">";
+        }
+        document.getElementById("sound").innerHTML = code;
+        break;
+    case 3:
+        for (var i = 1; i <= 3; i++) {
+            audioArray[i] = new Audio(bellwav[i]);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 // ベルを鳴らす
 function doRing(wavid) {
     if (wavid != null && wavid > 0) {
-        document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" type=\"audio/wav\" src=\"" + bellwav[wavid] + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
+        switch (ringMode) {
+        case 1:
+            document.getElementById("sound").innerHTML = "<embed id=\"embedsound\" type=\"audio/wav\" src=\"" + bellwav[wavid] + "\" autostart=\"true\" hidden=\"true\" width=\"1\" height=\"1\">";
+            break;
+        case 2:
+            document.getElementById("sound" + wavid).Play();
+            break;
+        case 3:
+            audioArray[wavid].play();
+            break;
+        default:
+            break;
+        }
     }
 }
 
 // 時間を止める
 function doHold() {
     clockTick = false;
-    document.getElementById("config").style.display = "block";
+    changeStyle("config", "display", "block");
 }
 
 // 時間を動かす
 function doTick() {
     clockTick = true;
-    document.getElementById("config").style.display = "none";
+    changeStyle("config", "display", "none");
 }
 
 // 内部状態をフォームにセットする
@@ -608,11 +740,14 @@ function setForm() {
             min = Math.floor(minsec / 60);
             sec = minsec % 60;
         }
-        document.getElementById("cfgmin" + i).value = "" + min;
-        document.getElementById("cfgsec" + i).value = "" + sec;
+        changeStyle("cfgmin" + i, "value", "" + min);
+        changeStyle("cfgsec" + i, "value", "" + sec);
+        //document.getElementById("cfgmin" + i).value = "" + min;
+        //document.getElementById("cfgsec" + i).value = "" + sec;
 
         var wavtype = bell[i].ring == 0 ? 0 : bell[i].wavtype;
-        document.getElementById("cfgwav" + i).value = "" + wavtype;
+        changeStyle("cfgwav" + i, "value", "" + wavtype);
+        //document.getElementById("cfgwav" + i).value = "" + wavtype;
     }
 }
 
@@ -650,7 +785,7 @@ function getForm() {
 // readmeを表示/非表示
 function displayReadme() {
     readmeToggle = !readmeToggle;
-    document.getElementById("readme").style.display = (readmeToggle ? "block" : "none");
+    changeStyle("readme", "display", readmeToggle ? "block" : "none");
     if (readmeToggle) {
         movePageEnd();
     }
@@ -659,21 +794,16 @@ function displayReadme() {
 // keybindを表示/非表示
 function displayKeybind() {
     keybindToggle = !keybindToggle;
-    document.getElementById("keybind").style.display = (keybindToggle ? "block" : "none");
+    changeStyle("keybind", "display", keybindToggle ? "block" : "none");
     if (keybindToggle) {
         movePageEnd();
     }
 }
 
-// 「準備OK?」のメッセージを表示
-function showAdvice() {
-    alert("これはブラウザで動く学会タイマーです。\n数分間、何も操作しないと、画面がオフになったり、\nスクリーンセーバーが作動したりしませんか?");
-}
-
 // logを表示/非表示
 function displayLog() {
     logToggle = !logToggle;
-    document.getElementById("log").style.display = (logToggle ? "block" : "none");
+    changeStyle("log", "display", logToggle ? "block" : "none");
     if (logToggle) {
         movePageEnd();
     }
@@ -687,6 +817,11 @@ function movePageTop() {
 // ページの終わりに移動
 function movePageEnd() {
     window.scrollTo(0, document.documentElement.scrollHeight);
+}
+
+// 「準備OK?」のメッセージを表示
+function showAdvice() {
+    alert("これはブラウザで動く学会タイマーです。\n数分間、何も操作しないと、画面がオフになったり、\nスクリーンセーバーが作動したりしませんか?");
 }
 
 // テキスト領域をフォーカス
@@ -728,7 +863,7 @@ function eventKeyUp(e) {
             }
         }
     } else if (code == 65 || code == 83 || code == 68) { // [A], [S], [D]: 2度押しでベル1, 2, 3
-        if (!noRing) {
+        if (ringMode != 0) {
             var t = (new Date()).getTime();
             if (timeTypeRing != null && t - timeTypeRing <= 1000 && typeRing == code) {
                 timeTypeRing = t;
