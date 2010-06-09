@@ -5,16 +5,20 @@
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <title>zjs</title>
 <style type="text/css">
-body {background-color:black;}
+body {background-color:black;margin:0;position:relative}
 #config table {background-color:#cc9; padding:1ex}
 #readme {background-color:#c96; padding:1ex; font-size:small}
 #keybind {background-color:#cc3; padding:1ex; font-size:small}
 #log {background-color:#6c9; padding:1ex; font-size:small}
 .minsecform {text-align:right}
+#sand {z-index:1; display:none; position:absolute; left:0px; top:0px; width:100%; height:1px; background-color:black}
+#disp {z-index:2; position:relative; padding:6px}
 </style>
 <script type="text/javascript" src="z.js"></script>
 </head>
-<body onload="init()" onresize="changeFontSize()">
+<body id="body" onload="init()" onresize="resiz()">
+<div id="sand"></div>
+<div id="disp">
 <div id="debugmessage" style="color:#ff6;font-weight:bold;display:none"></div>
 <div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="resetClock()">停止中</div>
 <div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="toggleClock()"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
@@ -90,10 +94,12 @@ body {background-color:black;}
 [7], [K]: （停止時）ショートカットキーの表示/非表示<br>
 [8], [P]: 時間表示の切替<br>
 [9], [H]: 「はじめにお読みください」の表示/非表示<br>
+[G]: 砂時計モードの表示/非表示<br>
 [2], [.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。
 </div>
 <div id="log" style="display:none"></div>
 </div><!-- id="config" -->
 <div id="sound"></div>
+</div>
 </body>
 </html>

@@ -102,6 +102,7 @@ var digitScale = 21; // 文字表示の拡大率(ウィンドウ幅に対する�
 var minsecLabelScale = 3; // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
 var ringMode = null; // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用
 var userAgent = null; // ブラウザ判別用
+var hourglassMode = 0; // 0: 砂時計なし, 1:砂時計モード（停止時オフ）, 2:砂時計モード（停止時も維持）
 //////// 自由に書き換えてください:ここまで ////////
 
 var clockTick = false; // 時計が進んでいるならtrue
@@ -187,10 +188,26 @@ function displayTime(etime) {
     document.getElementById("timesec").innerHTML = esecStr;
     setTimeColor();
 
-    if (etime % 1000 >= 600) {
-        changeStyle("timeminlabel", "color", "black");
+    var opt = {
+        ratio: 0,
+        color: "#ffc"
+    };
+    if (etime <= bell[2].etime) {
+        opt.ratio = etime / bell[2].etime;
+        opt.color = "#026";
+    } else if (etime <= bell[3].etime) {
+        opt.ratio = 1 - (bell[3].etime - etime) / (bell[3].etime - bell[2].etime);
+        opt.color = "#310";
     } else {
-        changeStyle("timeminlabel", "color", timeColor);
+        opt.ratio = 1;
+        opt.color = "#320";
+    }
+    refreshHourglass(opt);
+
+    if (etime % 1000 >= 600) {
+        changeStyle("timeminlabel", "visibility", "hidden");
+    } else {
+        changeStyle("timeminlabel", "visibility", "visible");
     }
 }
 
@@ -270,10 +287,12 @@ function setupUserAgent() {
 // URIをもとに時間および各種設定変更
 function setupByURI() {
     // URIの最後の「/」からあとが対象
-    var path = location.href;
+    //var path = location.href;
+    var path = location.pathname;
     if (path.match(/\//)) {
         path = path.replace(/^.*\//, "");
     }
+    path += location.search + location.hash;
 
     // p: よく使用する時間セット
     if (path.match(/p=?(\d+)([a-z]?)/)) {
@@ -358,6 +377,11 @@ function setupByURI() {
         } else {
             ringMode = 2;
         }
+    }
+
+    // h: 砂時計モード
+    if (path.match(/h=?(\d)/)) {
+        hourglassMode = myParseInt(RegExp.$1);
     }
 
     // d, b: ベルファイル
@@ -454,6 +478,34 @@ function chopYorei1() {
     }
 }
 
+// ブラウザサイズ変更
+function resiz() {
+    if (hourglassMode != 0) {
+        refreshHourglass(null);
+    }
+    changeFontSize();
+}
+
+// 砂時計表示変更
+function refreshHourglass(opt) {
+    if (hourglassMode == 2 || (hourglassMode == 1 && clockTick)) {
+        if (opt == null) {
+            updateClock();
+            return;
+        }
+        var h = (1 - opt.ratio) * document.body.clientHeight;
+        changeStyle("body", "backgroundColor", opt.color);
+        changeStyle("sand", "height", "" + h + "px");
+        changeStyle("sand", "display", "block");
+        if (debugMode) {
+            document.getElementById("debugmessage").innerHTML += ", h=" + h + ", opt.ratio=" + opt.ratio + ", opt.color=" + opt.color;
+        }
+    } else {
+        changeStyle("body", "backgroundColor", "black");
+        changeStyle("sand", "display", "none");
+    }
+}
+
 // フォントサイズ変更
 function changeFontSize() {
     var scrWidth = document.body.clientWidth;
@@ -510,7 +562,8 @@ function stopClock() {
         changeStyle("buttonstart", "display", "inline");
         changeStyle("buttonstop", "display", "none");
         changeStyle("buttonreset", "display", "inline");
-        changeStyle("timeminlabel", "color", timeColor);
+        changeStyle("timeminlabel", "visibility", "visible");
+        //changeStyle("timeminlabel", "color", timeColor);
 
         if (debugMode) {
             document.getElementById("debugmessage").innerHTML = "etime1:" + etime1 + ", etime2:" + etime2;
@@ -549,7 +602,6 @@ function resetClock() {
         }
 
         updateTitle();
-        //changeStyle("buttonstart", "value", "開始"); // うまくいかない(Firefox, Google Chromeで確認)
         document.getElementById("buttonstart").value = "開始";
         changeStyle("buttonstart", "display", "inline");
         changeStyle("buttonstop", "display", "none");
@@ -740,14 +792,11 @@ function setForm() {
             min = Math.floor(minsec / 60);
             sec = minsec % 60;
         }
-        changeStyle("cfgmin" + i, "value", "" + min);
-        changeStyle("cfgsec" + i, "value", "" + sec);
-        //document.getElementById("cfgmin" + i).value = "" + min;
-        //document.getElementById("cfgsec" + i).value = "" + sec;
+        document.getElementById("cfgmin" + i).value = "" + min;
+        document.getElementById("cfgsec" + i).value = "" + sec;
 
         var wavtype = bell[i].ring == 0 ? 0 : bell[i].wavtype;
-        changeStyle("cfgwav" + i, "value", "" + wavtype);
-        //document.getElementById("cfgwav" + i).value = "" + wavtype;
+        document.getElementById("cfgwav" + i).value = "" + wavtype;
     }
 }
 
@@ -850,9 +899,9 @@ function eventKeyUp(e) {
         code =  e.which;
     }
 
-    if (code == 32 || code == 90 || code == 53 || code == 101) { // [SPC], [Z], [5]: 開始/停止/再開
+    if (code == 32 || code == 90 || code == 53) { // [SPC], [Z], [5]: 開始/停止/再開
         toggleClock();
-    } else if (code == 27 || code == 88 || code == 48 || code == 96) { // [Esc], [X], [0]: 停止時2度押しでリセット
+    } else if (code == 27 || code == 88 || code == 48) { // [Esc], [X], [0]: 停止時2度押しでリセット
         if (!clockTick) {
             var t = (new Date()).getTime();
             if (timeTypeEsc != null && t - timeTypeEsc <= 1000) {
@@ -880,28 +929,32 @@ function eventKeyUp(e) {
                 typeRing = code;
             }
         }
-    } else if (code == 72 || code == 57 || code == 105) { // [H], [9]: 「はじめにお読みください」の表示/非表示
+    } else if (code == 72 || code == 57) { // [H], [9]: 「はじめにお読みください」の表示/非表示
         if (!clockTick) {
             displayReadme();
         }
-    } else if (code == 46 || code == 110 || code == 190 || code == 50 || code == 98) { // [2], [.]
+    } else if (code == 46 || code == 190 || code == 50) { // [2], [.]
         if (clockTick) {
             markTime(); // 経過時間の記録
             updateTitle();
         } else {
             displayLog(); // ログの表示/非表示
         }
-    } else if (code == 80 || code == 56 || code == 104) { // [P], [8]: 時間表示切替
+    } else if (code == 80 || code == 56) { // [P], [8]: 時間表示切替
         toggleTimeColorLabel();
-    } else if (code == 75 || code == 55 || code == 103) { // [K], [7]: キーバインドの表示/非表示
+    } else if (code == 75 || code == 55) { // [K], [7]: キーバインドの表示/非表示
         if (!clockTick) {
             displayKeybind();
         }
-    } else if (code == 77 || code == 51 || code == 99) { // [M], [3]: 数字拡大
+    } else if (code == 71) { // [G]: 砂時計モード切替
+        hourglassMode = (hourglassMode + 1) % 3;
+        refreshHourglass(null);
+        // 砂時計モード on/off の情報が必要
+    } else if (code == 77 || code == 51) { // [M], [3]: 数字拡大
         digitScale++;
         changeFontSize();
         updateClock();
-    } else if (code == 78 || code == 49 || code == 97) { // [N], [1]: 数字縮小
+    } else if (code == 78 || code == 49) { // [N], [1]: 数字縮小
         if (digitScale > 1) {
             digitScale--;
             changeFontSize();
