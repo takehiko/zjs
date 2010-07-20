@@ -16,7 +16,7 @@ var bell = new Array( // ベルセット
         "etime": 15 * 1000, // 鳴らす時間(開始からのミリ秒)
         "wavtype": 2        // ベルの種類
     }, {
-        // [3] 討論終了の鈴
+        // [3] 質疑終了の鈴
         "ring": 1,          // 0:使用しない, 1:使用する
         "etime": 20 * 1000, // 鳴らす時間(開始からのミリ秒)
         "wavtype": 3        // ベルの種類
@@ -145,7 +145,7 @@ function setTimeColor() {
     if (bell[3].ring == 2) {
         timeColorLabelStatus = 5;
     } else if (bell[2].ring == 2) {
-        timeColorLabelStatus = (bell[3].ring == 0 ? 6 : 4);
+        timeColorLabelStatus = 4;
     } else if (bell[1].ring == 2) {
         timeColorLabelStatus = 3;
     } else if (bell[0].ring == 2) {
@@ -154,6 +154,9 @@ function setTimeColor() {
         timeColorLabelStatus = 1;
     } else {
         timeColorLabelStatus = 0;
+    }
+    if (timeColorLabelStatus >= 4 && (bell[3].ring == 0 || bell[2].etime == bell[3].etime)) {
+        timeColorLabelStatus = 6;
     }
 
     timeColor = timeColorLabelArray[timeColorLabelStatus].timeColor;
@@ -176,7 +179,7 @@ function displayTime(etime) {
     } else if (etime <= bell[2].etime) {
         dtime = bell[2].etime - etime; // 発表残り時間(ミリ秒)
     } else {
-        dtime = etime - bell[2].etime; // 討論経過時間(ミリ秒)
+        dtime = etime - bell[2].etime; // 質疑経過時間(ミリ秒)
     }
     var esec = Math.floor(dtime / 1000); // 表示する秒
     var emin = Math.floor(esec / 60); // 表示する分
@@ -829,6 +832,9 @@ function getForm() {
     bell[1].etime = (minsecArray[2] - minsecArray[1]) * 1000;
     bell[2].etime = minsecArray[2] * 1000;
     bell[3].etime = (minsecArray[2] + minsecArray[3]) * 1000;
+    if (bell[3].ring == 0) {
+      bell[3].etime = bell[2].etime;
+    }
 }
 
 // readmeを表示/非表示
