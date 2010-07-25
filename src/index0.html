@@ -16,62 +16,62 @@ body {background-color:black;margin:0;position:relative}
 </style>
 <script type="text/javascript" src="z.js"></script>
 </head>
-<body id="body" onload="init()" onresize="resiz()">
+<body id="body" onload="zjs.config.init()" onresize="zjs.screen.resize()">
 <div id="sand"></div>
 <div id="disp">
 <div id="debugmessage" style="color:#ff6;font-weight:bold;display:none"></div>
-<div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="resetClock()">停止中</div>
-<div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="toggleClock()"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
+<div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="zjs.clock.resetClock()">停止中</div>
+<div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="zjs.clock.toggleClock()"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
 <div id="button">
-<input type="button" value="開始" onclick="startClock()" id="buttonstart" style="display:inline">
-<input type="button" value="停止" onclick="stopClock()" id="buttonstop" style="display:none">
-<input type="button" value="リセット" onclick="resetClock()" id="buttonreset" style="display:inline">
+<input type="button" value="開始" onclick="zjs.clock.startClock()" id="buttonstart" style="display:inline">
+<input type="button" value="停止" onclick="zjs.clock.stopClock()" id="buttonstop" style="display:none">
+<input type="button" value="リセット" onclick="zjs.clock.resetClock()" id="buttonreset" style="display:inline">
 </div>
 <div id="config">
 <table border="0">
   <tr id="timetr2">
     <th>発表時間</th>
     <td>&nbsp;</td>
-    <td><input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="fT(this)" onblur="bT(this)">分<input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="fT(this)" onblur="bT(this)">秒</td>
+    <td><input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒</td>
     <td id="bellsort2">　ベルの種類 <select id="cfgwav2"><option value="0">なし</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></td>
   </tr>
   <tr id="timetr0">
     <th id="cfglabel0">予鈴1</th>
     <td>発表終了</td>
-    <td><input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="fT(this)" onblur="bT(this)">分<input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="fT(this)" onblur="bT(this)">秒前</td>
+    <td><input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒前</td>
     <td id="bellsort0">　ベルの種類 <select id="cfgwav0"><option value="0">なし</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></td>
   </tr>
   <tr id="timetr1">
     <th>予鈴2</th>
-    <td>発表終了</td><td><input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="fT(this)" onblur="bT(this)">分<input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="fT(this)" onblur="bT(this)">秒前</td>
+    <td>発表終了</td><td><input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒前</td>
     <td id="bellsort1">　ベルの種類 <select id="cfgwav1"><option value="0" selected>なし</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
   </tr>
   <tr id="timetr3">
     <th>質疑時間</th>
     <td>&nbsp;</td>
-    <td><input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="fT(this)" onblur="bT(this)">分<input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="fT(this)" onblur="bT(this)">秒</td>
+    <td><input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒</td>
     <td id="bellsort3">　ベルの種類 <select id="cfgwav3"><option value="0">なし</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></td>
   </tr>
   <tr>
     <td colspan="4">
-      <input type="button" value="設定を変更する" onclick="getForm();resetClock()">
-      <input type="button" value="設定を元に戻す" onclick="setForm()">
-      <input type="button" value="時間表示の切替" onclick="toggleTimeColorLabel()">
-      <input type="button" value="準備OK?" onclick="showAdvice()" style="background-color:#9cf">
+      <input type="button" value="設定を変更する" onclick="zjs.board.getForm();zjs.clock.resetClock()">
+      <input type="button" value="設定を元に戻す" onclick="zjs.board.setForm()">
+      <input type="button" value="時間表示の切替" onclick="zjs.screen.toggleTimeColorLabel()">
+      <input type="button" value="準備OK?" onclick="zjs.board.showAdvice()" style="background-color:#9cf">
     </td>
   </tr>
   <tr>
     <td colspan="4">
-      <input type="button" value="はじめにお読みください" onclick="displayReadme()">
-      <input type="button" value="ショートカットキー" onclick="displayKeybind()">
-      <input type="button" value="ログ" onclick="displayLog()">
+      <input type="button" value="はじめにお読みください" onclick="zjs.board.displayReadme()">
+      <input type="button" value="ショートカットキー" onclick="zjs.board.displayKeybind()">
+      <input type="button" value="ログ" onclick="zjs.board.displayLog()">
     </td>
   </tr>
   <tr id="belltest">
     <td colspan="4">
-      <input type="button" value="ベル1" onclick="doRing(1)">
-      <input type="button" value="ベル2" onclick="doRing(2)">
-      <input type="button" value="ベル3" onclick="doRing(3)">
+      <input type="button" value="ベル1" onclick="zjs.bell.ring(1)">
+      <input type="button" value="ベル2" onclick="zjs.bell.ring(2)">
+      <input type="button" value="ベル3" onclick="zjs.bell.ring(3)">
     </td>
   </tr>
 </table>
