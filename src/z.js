@@ -1,7 +1,7 @@
 var zjs = {};
 
 zjs.config = {
-    //////// 自由に書き換えてください:ここから ////////
+    // // // 自由に書き換えてください:ここから // // //
     bell: new Array( // ベルセット
         { 
             // [0] 予鈴1
@@ -106,7 +106,9 @@ zjs.config = {
     ringMode: null, // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用
     userAgent: null, // ブラウザ判別用
     hourglassMode: 0, // 0: 砂時計なし, 1:砂時計モード（停止時オフ）, 2:砂時計モード（停止時も維持）
-    //////// 自由に書き換えてください:ここまで ////////
+    boardMagnifyMode: 1, // 0:パネルなどの拡大無効，1:パネルとボタンのサイズ変更可，2:パネルとボタンとメッセージのサイズ変更可
+    boardMagnifyPercent: 120, // パネル拡大率
+    // // // 自由に書き換えてください:ここまで // // //
     _dummy_: null
 };
 
@@ -137,6 +139,7 @@ zjs.config = {
          zjs.screen.changeTimeColorLabel(zjs.screen.color.index);
          zjs.clock.resetClock();
          zjs.board.setForm();
+         zjs.board.setMagnify();
      }
 
      // ブラウザ判別
@@ -267,6 +270,15 @@ zjs.config = {
              prop.hourglassMode = myParseInt(RegExp.$1);
          }
 
+         // mg: パネルサイズ変更可
+         if (path.match(/mg=?(\d)/)) {
+             prop.boardMagnifyMode = myParseInt(RegExp.$1);
+         }
+         // mp: パネル拡大率
+         if (path.match(/mp=?(\d)/)) {
+             prop.boardMagnifyPercent = myParseInt(RegExp.$1);
+         }
+
          // d, b: ベルファイル
          if (!prop.noChangeBellWav) {
              var bellWavDir = "";
@@ -315,7 +327,7 @@ zjs.config = {
          prop.bell[2].wavtime = 2;
          prop.bell[3].ring = 1;
          prop.bell[3].wavtime = 3;
-         //zjs.board.chopFirstBell1();
+         // zjs.board.chopFirstBell1();
      }
 
      // 予鈴1, 予鈴2, 発表終了, 質疑終了の分（文字列）をもとにzjs.config.bellに設定する
@@ -524,7 +536,7 @@ zjs.clock = {
      zjs.clock.stopClock = stopClock;
      zjs.clock.toggleClock = toggleClock;
      zjs.clock.resetClock = resetClock;
-     //zjs.clock.timeToString = timeToString;
+     // zjs.clock.timeToString = timeToString;
      zjs.clock.markTime = markTime;
      zjs.clock.markLapTime = markLapTime;
      zjs.clock.getElapsedTime = getElapsedTime;
@@ -618,6 +630,10 @@ zjs.key = {
                  zjs.config.digitScale--;
                  zjs.screen.changeFontSize();
                  zjs.screen.updateClock();
+             }
+         } else if (code == 66) { // [B]: パネル拡大率変更
+             if (!zjs.clock.clockTick && zjs.config.boardMagnifyMode != 0) {
+                 zjs.board.nextMagnify();
              }
          }
      }
@@ -753,6 +769,42 @@ zjs.board = {
          prop.focusingText = false;
      }
 
+     // パネルなどを拡大する
+     // 引数がないときはzjs.config.boardMagnifyPercentを参照する
+     function setMagnify(percent) {
+         if (percent) {
+             zjs.config.boardMagnifyPercent = percent;
+         } else if (zjs.config.boardMagnifyMode == 0) {
+             zjs.screen.changeStyle("keybind:magnify", "display", "none");
+             return;
+         }
+         var idArray = (zjs.config.boardMagnifyMode == 2) ?
+             new Array("button", "config:table", "readme", "keybind", "log") :
+             new Array("button", "config:table");
+         for (var i in idArray) {
+             zjs.screen.changeStyle(idArray[i], "fontSize", "" + zjs.config.boardMagnifyPercent + "%");
+         }
+     }
+
+     // パネル拡大率を変更する
+     function nextMagnify() {
+         var p = zjs.config.boardMagnifyPercent;
+
+         switch (p) {
+         case 100:
+             p = 120; break;
+         case 120:
+             p = 150; break;
+         case 150:
+             p = 200; break;
+         case 200:
+             p = 100; break;
+         default:
+             p = 100; break;
+         }
+         setMagnify(p);
+     }
+
      zjs.board.appendToLog = appendToLog;
      zjs.board.chopFirstBell1 = chopFirstBell1;
      zjs.board.setForm = setForm;
@@ -763,6 +815,8 @@ zjs.board = {
      zjs.board.showAdvice = showAdvice;
      zjs.board.fT = fT;
      zjs.board.bT = bT;
+     zjs.board.setMagnify = setMagnify;
+     zjs.board.nextMagnify = nextMagnify;
 })();
 
 zjs.bell = {
@@ -1055,10 +1109,10 @@ zjs.screen = {
      }
 
      zjs.screen.changeStyle = changeStyle;
-     //zjs.screen.setTimeColor = setTimeColor;
+     // zjs.screen.setTimeColor = setTimeColor;
      zjs.screen.displayTime = displayTime;
      zjs.screen.resize = resize;
-     //zjs.screen.refreshHourglass = refreshHourglass;
+     // zjs.screen.refreshHourglass = refreshHourglass;
      zjs.screen.changeFontSize = changeFontSize;
      zjs.screen.changeTimeColorLabel = changeTimeColorLabel;
      zjs.screen.updateTitle = updateTitle;

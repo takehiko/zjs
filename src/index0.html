@@ -6,7 +6,8 @@
 <title>zjs</title>
 <style type="text/css">
 body {background-color:black;margin:0;position:relative}
-#config table {background-color:#cc9; padding:1ex}
+input, select { font-size:100% }
+#config table {background-color:#cc9; padding:1ex }
 #readme {background-color:#c96; padding:1ex; font-size:small}
 #keybind {background-color:#cc3; padding:1ex; font-size:small}
 #log {background-color:#6c9; padding:1ex; font-size:small}
@@ -28,7 +29,7 @@ body {background-color:black;margin:0;position:relative}
 <input type="button" value="リセット" onclick="zjs.clock.resetClock()" id="buttonreset" style="display:inline">
 </div>
 <div id="config">
-<table border="0">
+<table border="0" id="config:table">
   <tr id="timetr2">
     <th>発表時間</th>
     <td>&nbsp;</td>
@@ -91,6 +92,7 @@ body {background-color:black;margin:0;position:relative}
 [A], [S], [D]: 2度押しでベル1〜3<br>
 [1], [N]: 数字縮小<br>
 [3], [M]: 数字拡大<br>
+<span id="keybind:magnify">[B]: （停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%…）<br></span>
 [7], [K]: （停止時）ショートカットキーの表示/非表示<br>
 [8], [P]: 時間表示の切替<br>
 [9], [H]: 「はじめにお読みください」の表示/非表示<br>
