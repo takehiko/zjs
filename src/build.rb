@@ -9,7 +9,7 @@ class Build
     # コンストラクタ
     @input = option[:input]
     @output = option[:output]
-    @compress = option[:compress] # 0:何もしない，1:空白4文字を1文字に，2:zjs.プロパティを圧縮，4:コメント除去
+    @compress = option[:compress]
 
     @@zjs_prop_h = {
       "config" => "g",
@@ -24,10 +24,7 @@ class Build
 
   def compress_zjs_property(str)
     # 「zjs.プロパティ」を圧縮してできる文字列を返す
-    while @@zjs_prop_r =~ str
-      str["zjs.#{$1}"] = "z.#{@@zjs_prop_h[$1]}"
-    end
-    str
+    str.gsub(@@zjs_prop_r) {"z.#{@@zjs_prop_h[$1]}"}
   end
   private :compress_zjs_property
 
@@ -38,19 +35,21 @@ class Build
 
     js_in.each_line do |line|
       if @compress & 1 != 0
-        # 行頭空白4文字を1文字に
-        line.sub!(/^( +)/) { spc = $1.length; " " * (spc / 4 + spc % 4)}
+        # 1: 行頭空白4文字を1文字に
+        line.sub!(/^( +)/) {spc = $1.length; " " * (spc / 4 + spc % 4)}
       end
+
       if @compress & 2 != 0 && /(zjs)|(prop)/ =~ line
-        # 「zjs」「zjs.プロパティ」を圧縮
+        # 2: 「zjs」「zjs.プロパティ」「prop」を圧縮
         line = compress_zjs_property(line)
         line.gsub!(/\bprop\b/, "_")
         if /var zjs[ ;]/ =~ line
           line.sub!(/var zjs/, "var z")
         end
       end
+
       if @compress & 4 != 0
-          # コメント除去
+        # 4: コメント除去
         slash_pos = line.index("// ")
         if slash_pos && !line[slash_pos...line.length].index('"')
           line = line[0, slash_pos]
@@ -65,20 +64,21 @@ class Build
 
     js_out
   end
+  private :read_js
 
   def start
     # 変換処理の本体
     html_in = open(@input).read
     html_out = ""
     html_in.each_line do |line|
-      if / src=.(.*?).js.>/ =~ line
+      if / src=\"(.*?)\.js\">/ =~ line
         js = $1 + ".js"
         html_out += $`
         html_out += ">\n"
         html_out += read_js(js)
         html_out += "</script>\n"
       else
-        line = compress_zjs_property(line) if @compress & 2 != 0 && /zjs/ =~ line
+        line = compress_zjs_property(line) if @compress & 2 != 0 && line.index("zjs")
         html_out += line
       end
     end
@@ -105,11 +105,11 @@ if __FILE__ == $0
   }
   OptionParser.new do |opt|
     opt.on("-i VAL", "--input=VAL", 
-           "input file name (default: index0.html)") {|v|
+           "input file name (default: #{option[:input]})") {|v|
       option[:input] = v
     }
     opt.on("-o VAL", "--output=VAL", 
-           "output file name (default: ../index.html)") {|v|
+           "output file name (default: #{option[:output]})") {|v|
       option[:output] = v
     }
     opt.on("-I VAL", "--input-dir=VAL", "input directory name") {|v|
