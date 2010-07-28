@@ -249,7 +249,7 @@ zjs.config = {
          }
 
          // w: ベルモード
-         if (path.match(/w=?(\d)/)) {
+         if (path.match(/w=?(\d+)/)) {
              prop.ringMode = myParseInt(RegExp.$1);
          }
          if (prop.ringMode == null) {
@@ -266,16 +266,16 @@ zjs.config = {
          }
 
          // h: 砂時計モード
-         if (path.match(/h=?(\d)/)) {
+         if (path.match(/h=?(\d+)/)) {
              prop.hourglassMode = myParseInt(RegExp.$1);
          }
 
          // mg: パネルサイズ変更可
-         if (path.match(/mg=?(\d)/)) {
+         if (path.match(/mg=?(\d+)/)) {
              prop.boardMagnifyMode = myParseInt(RegExp.$1);
          }
          // mp: パネル拡大率
-         if (path.match(/mp=?(\d)/)) {
+         if (path.match(/mp=?(\d+)/)) {
              prop.boardMagnifyPercent = myParseInt(RegExp.$1);
          }
 

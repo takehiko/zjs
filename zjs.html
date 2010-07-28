@@ -267,7 +267,7 @@ zjs.config = {
          }
 
          // w: ベルモード
-         if (path.match(/w=?(\d)/)) {
+         if (path.match(/w=?(\d+)/)) {
              prop.ringMode = myParseInt(RegExp.$1);
          }
          if (prop.ringMode == null) {
@@ -284,16 +284,16 @@ zjs.config = {
          }
 
          // h: 砂時計モード
-         if (path.match(/h=?(\d)/)) {
+         if (path.match(/h=?(\d+)/)) {
              prop.hourglassMode = myParseInt(RegExp.$1);
          }
 
          // mg: パネルサイズ変更可
-         if (path.match(/mg=?(\d)/)) {
+         if (path.match(/mg=?(\d+)/)) {
              prop.boardMagnifyMode = myParseInt(RegExp.$1);
          }
          // mp: パネル拡大率
-         if (path.match(/mp=?(\d)/)) {
+         if (path.match(/mp=?(\d+)/)) {
              prop.boardMagnifyPercent = myParseInt(RegExp.$1);
          }
 
@@ -1216,7 +1216,7 @@ zjs.screen = {
 [A], [S], [D]: 2度押しでベル1〜3<br>
 [1], [N]: 数字縮小<br>
 [3], [M]: 数字拡大<br>
-<span id="keybind:magnify">[B]: （停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%…）<br></span>
+<span id="keybind:magnify">[B]: （停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%→…）<br></span>
 [7], [K]: （停止時）ショートカットキーの表示/非表示<br>
 [8], [P]: 時間表示の切替<br>
 [9], [H]: 「はじめにお読みください」の表示/非表示<br>
