@@ -1,15 +1,15 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html lang="ja">
 <head>
-<mata name="author" content="takehikom">
+<meta name="author" content="takehikom">
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <title>zjs</title>
 <style type="text/css">
 body {background-color:black;margin:0;position:relative}
-input, select { font-size:100% }
-#config table {background-color:#cc9; padding:1ex }
+input, select {font-size:100%}
+#config table {background-color:#cc9; padding:1ex}
 #readme {background-color:#c96; padding:1ex; font-size:small}
-#keybind {background-color:#cc3; padding:1ex; font-size:small}
+#keybind,#iv_keybind {background-color:#cc3; padding:1ex; font-size:small}
 #log {background-color:#6c9; padding:1ex; font-size:small}
 .minsecform {text-align:right}
 #sand {z-index:1; display:none; position:absolute; left:0px; top:0px; width:100%; height:1px; background-color:black}
@@ -24,84 +24,93 @@ input, select { font-size:100% }
 <div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="zjs.clock.resetClock()">停止中</div>
 <div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="zjs.clock.toggleClock()"><span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span></div>
 <div id="button">
-<input type="button" value="開始" onclick="zjs.clock.startClock()" id="buttonstart" style="display:inline">
-<input type="button" value="停止" onclick="zjs.clock.stopClock()" id="buttonstop" style="display:none">
-<input type="button" value="リセット" onclick="zjs.clock.resetClock()" id="buttonreset" style="display:inline">
+<input id="buttonstart" type="button" value="開始" onclick="zjs.clock.startClock()" style="display:inline">
+<input id="buttonstop" type="button" value="停止" onclick="zjs.clock.stopClock()" style="display:none">
+<input id="buttonreset" type="button" value="リセット" onclick="zjs.clock.resetClock()" style="display:inline">
 </div>
 <div id="config">
-<table border="0" id="config:table">
+<table border="0" id="config_table">
   <tr id="timetr2">
-    <th>発表時間</th>
+    <th id="Dlabel_talktime">発表時間</th>
     <td>&nbsp;</td>
-    <td><input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒</td>
-    <td id="bellsort2">　ベルの種類 <select id="cfgwav2"><option value="0">なし</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></td>
+    <td><input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgmin2">分</span><input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgsec2">秒</span></td>
+    <td id="bellsort2"><span id="Dbellsort2">　ベルの種類</span> <select id="cfgwav2"><option id="Dcfgwav20" value="0">なし</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></td>
   </tr>
   <tr id="timetr0">
     <th id="cfglabel0">予鈴1</th>
-    <td>発表終了</td>
-    <td><input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒前</td>
-    <td id="bellsort0">　ベルの種類 <select id="cfgwav0"><option value="0">なし</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></td>
+    <td id="Dlabel_bell0">発表終了</td>
+    <td><input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgmin0">分</span><input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgsec0">秒前</span></td>
+    <td id="bellsort0"><span id="Dbellsort0">　ベルの種類</span> <select id="cfgwav0"><option id="Dcfgwav00" value="0">なし</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></td>
   </tr>
   <tr id="timetr1">
-    <th>予鈴2</th>
-    <td>発表終了</td><td><input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒前</td>
-    <td id="bellsort1">　ベルの種類 <select id="cfgwav1"><option value="0" selected>なし</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
+    <th id="Dcfglabel1">予鈴2</th>
+    <td id="Dlabel_bell1">発表終了</td><td><input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgmin1">分</span><input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgsec1">秒前</span></td>
+    <td id="bellsort1"><span id="Dbellsort1">　ベルの種類</span> <select id="cfgwav1"><option id="Dcfgwav10" value="0" selected>なし</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
   </tr>
   <tr id="timetr3">
-    <th>質疑時間</th>
+    <th id="Dlabel_qa">質疑時間</th>
     <td>&nbsp;</td>
-    <td><input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒</td>
-    <td id="bellsort3">　ベルの種類 <select id="cfgwav3"><option value="0">なし</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></td>
+    <td><input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgmin3">分</span><input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span id="Dcfgsec3">秒</span></td>
+    <td id="bellsort3"><span id="Dbellsort3">　ベルの種類</span> <select id="cfgwav3"><option id="Dcfgwav30" value="0">なし</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></td>
   </tr>
   <tr>
     <td colspan="4">
-      <input type="button" value="設定を変更する" onclick="zjs.board.getForm();zjs.clock.resetClock()">
-      <input type="button" value="設定を元に戻す" onclick="zjs.board.setForm()">
-      <input type="button" value="時間表示の切替" onclick="zjs.screen.toggleTimeColorLabel()">
-      <input type="button" value="準備OK?" onclick="zjs.board.showAdvice()" style="background-color:#9cf">
+      <input id="Dbutton_getform" type="button" value="設定を変更する" onclick="zjs.board.getForm();zjs.clock.resetClock()">
+      <input id="Dbutton_setform" type="button" value="設定を元に戻す" onclick="zjs.board.setForm()">
+      <input id="Dbutton_coundmode" type="button" value="時間表示の切替" onclick="zjs.screen.toggleTimeColorLabel()">
+      <input id="Dbutton_advice" type="button" value="準備OK?" onclick="zjs.board.showAdvice()" style="background-color:#9cf">
     </td>
   </tr>
   <tr>
     <td colspan="4">
-      <input type="button" value="はじめにお読みください" onclick="zjs.board.displayReadme()">
-      <input type="button" value="ショートカットキー" onclick="zjs.board.displayKeybind()">
-      <input type="button" value="ログ" onclick="zjs.board.displayLog()">
+      <input id="Dbutton_readme" type="button" value="はじめにお読みください" onclick="zjs.board.displayReadme()">
+      <input id="Dbutton_keybind" type="button" value="ショートカットキー" onclick="zjs.board.displayKeybind()">
+      <input id="Dbutton_log" type="button" value="ログ" onclick="zjs.board.displayLog()">
     </td>
   </tr>
   <tr id="belltest">
     <td colspan="4">
-      <input type="button" value="ベル1" onclick="zjs.bell.ring(1)">
-      <input type="button" value="ベル2" onclick="zjs.bell.ring(2)">
-      <input type="button" value="ベル3" onclick="zjs.bell.ring(3)">
+      <input id="Dbutton_ring1" type="button" value="ベル1" onclick="zjs.bell.ring(1)">
+      <input id="Dbutton_ring2" type="button" value="ベル2" onclick="zjs.bell.ring(2)">
+      <input id="Dbutton_ring3" type="button" value="ベル3" onclick="zjs.bell.ring(3)">
     </td>
   </tr>
 </table>
 <div id="readme" style="display:none">
 <ul>
   <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま〜 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
-  <li id="readme:key">マウスのほか、キーボードでも操作ができます。テンキーをご使用の際は、あらかじめ、Num Lockがオンになっているかご確認ください。</li>
+  <li id="readme_key">マウスのほか、キーボードでも操作ができます。テンキーをご使用の際は、あらかじめ、Num Lockがオンになっているかご確認ください。</li>
   <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
-  <li>このファイル単体で動きますが、ベルのwavファイルを用意し、ブラウザで再生するためのプラグインを入れるなど（例えば、Firefox+QuickTime）<span id="readmering">すれば</span>、音を鳴らすこともできます。</li>
+  <li id="readmering">このファイル単体で動きますが、ベルのwavファイルを用意すれば、音を鳴らすこともできます。</li>
+  <li id="iv_readmering" style="display:none">このファイル単体で動きますが、ベルのwavファイルを用意した上で、このファイルの中の「ringMode: 0,」を「ringMode: null,」に書き換えれば、音を鳴らすこともできます。</li>
   <li>「zjs」という名前の由来は、「座長の友に対抗して、座長のjs」です。jsはJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ていますよね！</li>
   <li>このファイルの最新版と過去のいくつかのバージョンは、<a href="http://github.com/takehiko/zjs/">http://github.com/takehiko/zjs/</a> から取得可能です。</li>
 </ul>
 </div><!-- id="readme" -->
 <div id="keybind" style="display:none">
-[5], [Z], [SPC]: 開始/停止/再開<br>
-[0], [X], [Esc]: （停止時）2度押しでリセット<br>
-[A], [S], [D]: 2度押しでベル1〜3<br>
-[1], [N]: 数字縮小<br>
-[3], [M]: 数字拡大<br>
-<span id="keybind:magnify">[B]: （停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%→…）<br></span>
-[7], [K]: （停止時）ショートカットキーの表示/非表示<br>
-[8], [P]: 時間表示の切替<br>
-[9], [H]: 「はじめにお読みください」の表示/非表示<br>
-[G]: 砂時計モードの表示/非表示<br>
-[2], [.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。
+[5], [Z], [SPC]: <span id="Dkeybind_clock">開始/停止/再開</span><br>
+[0], [X], [Esc]: <span id="Dkeybind_reset">（停止時）2度押しでリセット</span><br>
+[A], [S], [D]: <span id="Dkeybind_bell">2度押しでベル1〜3</span><br>
+[1], [N]: <span id="Dkeybind_shorten">数字縮小</span><br>
+[3], [M]: <span id="Dkeybind_enlarge">数字拡大</span><br>
+<span id="keybind_magnify">[B]: <span id="Dkeybind_magnify">（停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%→…）</span><br></span>
+[7], [K]: <span id="Dkeybind_keybind">（停止時）ショートカットキーの表示/非表示</span><br>
+[8], [P]: <span id="Dkeybind_countmode">時間表示の切替</span><br>
+[9], [H]: <span id="Dkeybind_readme">「はじめにお読みください」の表示/非表示</span><br>
+[G]: <span id="Dkeybind_hourglass">砂時計モードの表示/非表示</span><br>
+[2], [.]: <span id="Dkeybind_log">カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。</span>
+</div>
+<div id="iv_keybind" style="display:none">
+ショートカットキーは無効です。
 </div>
 <div id="log" style="display:none"></div>
 </div><!-- id="config" -->
 <div id="sound"></div>
+</div>
+<div id="advice" style="display:none">
+これはブラウザで動く学会タイマーです。
+数分間、何も操作しないと、画面がオフになったり、
+スクリーンセーバーが作動したりしませんか?
 </div>
 </body>
 </html>

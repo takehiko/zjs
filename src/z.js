@@ -99,7 +99,7 @@ zjs.config = {
     noChangeTitle: false, // trueならタイトルバーは「zjs」固定
 
     bellWavArray: new Array(null, "chime1.wav", "chime2.wav", "chime3.wav"), // ベルのファイル
-    noChangeBellWav: false, //trueならベルのファイル名固定．falseならsetupByURIで書き換えられる
+    noChangeBellWav: false, // trueならベルのファイル名固定．falseならsetupByURIで書き換えられる
 
     digitScale: 21, // 文字表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
     minsecLabelScale: 3, // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
@@ -124,8 +124,8 @@ zjs.config = {
              zjs.screen.changeStyle("debugmessage", "display", "block");
          }
          if (prop.noKey) { // キー入力無効
-             document.getElementById("keybind").innerHTML = "ショートカットキーは無効です。";
-             zjs.screen.changeStyle("readme:key", "display", "none");
+             zjs.screen.keybindId = "iv_keybind";
+             zjs.screen.changeStyle("readme_key", "display", "none");
          } else { // キー入力有効
              document.onkeyup = zjs.key.eventKeyUp;
          }
@@ -284,7 +284,7 @@ zjs.config = {
              var bellWavDir = "";
              var bellWavBase = "chime";
 
-             if (path.match(/d=([A-Za-z0-9\-_]+)/)) { // d=ディレクトリ名
+             if (path.match(/d=([A-Za-z0-9\-\/_]+)/)) { // d=ディレクトリ名
                  bellWavDir = RegExp.$1;
                  if (!bellWavDir.match(/\/$/)) {
                      bellWavDir += "/";
@@ -739,7 +739,7 @@ zjs.board = {
      // keybindを表示/非表示
      function displayKeybind() {
          prop.keybindToggle = !prop.keybindToggle;
-         zjs.screen.changeStyle("keybind", "display", prop.keybindToggle ? "block" : "none");
+         zjs.screen.changeStyle(zjs.screen.keybindId, "display", prop.keybindToggle ? "block" : "none");
          if (prop.keybindToggle) {
              zjs.screen.movePageEnd();
          }
@@ -756,7 +756,7 @@ zjs.board = {
 
      // 「準備OK?」のメッセージを表示
      function showAdvice() {
-         alert("これはブラウザで動く学会タイマーです。\n数分間、何も操作しないと、画面がオフになったり、\nスクリーンセーバーが作動したりしませんか?");
+         alert(document.getElementById("advice").innerHTML);
      }
 
      // テキスト領域をフォーカス
@@ -775,12 +775,12 @@ zjs.board = {
          if (percent) {
              zjs.config.boardMagnifyPercent = percent;
          } else if (zjs.config.boardMagnifyMode == 0) {
-             zjs.screen.changeStyle("keybind:magnify", "display", "none");
+             zjs.screen.changeStyle("keybind_magnify", "display", "none");
              return;
          }
          var idArray = (zjs.config.boardMagnifyMode == 2) ?
-             new Array("button", "config:table", "readme", "keybind", "log") :
-             new Array("button", "config:table");
+             new Array("button", "config_table", "readme", "keybind", "log") :
+             new Array("button", "config_table");
          for (var i in idArray) {
              zjs.screen.changeStyle(idArray[i], "fontSize", "" + zjs.config.boardMagnifyPercent + "%");
          }
@@ -841,7 +841,8 @@ zjs.bell = {
 
          switch (prop.ringMode) {
          case 0:
-             document.getElementById("readmering").innerHTML = "した上で、このファイルの中の「ringMode: 0,」を「ringMode: null,」に書き換えれば";
+             zjs.screen.changeStyle("readmering", "display", "none");
+             zjs.screen.changeStyle("iv_readmering", "display", "list-item");
              zjs.screen.changeStyle("belltest", "display", "none");
              for (var i = 0; i <= 3; i++) {
                  zjs.screen.changeStyle("bellsort" + i, "display", "none");
@@ -910,6 +911,7 @@ zjs.screen = {
         ratio: 0,
         color: "#ffc"
     },
+    keybindId: "keybind", // 「ショートカットキー」ボタンで表示/非表示の要素
     _dummy_: null
 };
 
