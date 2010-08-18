@@ -156,7 +156,7 @@ module JE
   <li id="readmering">The HTML file itself works. But you can play the sounds or give the bell a ring if you have wav files.</li>
   <li id="iv_readmering" style="display:none">The HTML file itself works. But you can play the sounds or give the bell a ring, if you have wav files and change "ringMode: 0," of this file into "ringMode: null,".</li>
   <li>The initial character of "zjs" was named after "Zacho No Tomo" ("Chairperson's Companion", forcibly translated into English), a Windows application created by Mr. Tomohiko Imachi. I implemented the features of Zacho No Tomo by JavaScript at first, and have set in various useful functions from my own standpoint to be a comprehensive clock register.</li>
-  <li>The latest and old versions of this file is available through <a href="http://github.com/takehiko/zjs/">github</a>.</li>
+  <li>The latest and old versions of this file are available through <a href="http://github.com/takehiko/zjs/">GitHub</a>.</li>
 </ul>
 EOS
 
