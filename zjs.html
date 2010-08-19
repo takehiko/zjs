@@ -108,8 +108,9 @@ zjs.config = {
     ringMode: null,
     userAgent: null,
     hourglassMode: 0,
-    boardMagnifyMode: 1,
+    boardMagnifyMode: 2,
     boardMagnifyPercent: 120,
+    longwiseMode: 0,
     _dummy_: null
 };
 
@@ -483,12 +484,14 @@ zjs.clock = {
 
      function hold() {
          prop.clockTick = false;
+         zjs.screen.setLongwise();
          zjs.screen.changeStyle("config", "display", "block");
      }
 
      function tick() {
          prop.clockTick = true;
          zjs.screen.changeStyle("config", "display", "none");
+         zjs.screen.setLongwise();
      }
 
      zjs.clock.startClock = startClock;
@@ -946,6 +949,20 @@ zjs.screen = {
              updateClock();
          }
          changeFontSize();
+         setLongwise();
+     }
+
+     function setLongwise() {
+         if (zjs.config.longwiseMode == 0) {
+             return;
+         }
+
+         var pad = 0;
+         if (zjs.clock.clockTick) {
+             pad = document.body.clientHeight - document.getElementById("time").offsetHeight - 2 * document.getElementById("timestatus").offsetHeight;
+             pad /= 2;
+         }
+         changeStyle("time", "paddingTop", "" + pad);
      }
 
      function refreshHourglass() {
@@ -983,6 +1000,8 @@ zjs.screen = {
              changeStyle("timeseclabel", "fontSize", "" + fs + "pt");
              changeStyle("timestatus", "fontSize", "" + fs + "pt");
          }
+
+         setLongwise();
      }
 
      function changeTimeColorLabel(index) {
@@ -1038,6 +1057,7 @@ zjs.screen = {
      zjs.screen.changeStyle = changeStyle;
      zjs.screen.displayTime = displayTime;
      zjs.screen.resize = resize;
+     zjs.screen.setLongwise = setLongwise;
      zjs.screen.changeFontSize = changeFontSize;
      zjs.screen.changeTimeColorLabel = changeTimeColorLabel;
      zjs.screen.updateTitle = updateTitle;

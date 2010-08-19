@@ -106,8 +106,9 @@ zjs.config = {
     ringMode: null, // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用
     userAgent: null, // ブラウザ判別用
     hourglassMode: 0, // 0: 砂時計なし, 1:砂時計モード（停止時オフ）, 2:砂時計モード（停止時も維持）
-    boardMagnifyMode: 1, // 0:パネルなどの拡大無効，1:パネルとボタンのサイズ変更可，2:パネルとボタンとメッセージのサイズ変更可
+    boardMagnifyMode: 2, // 0:パネルなどの拡大無効，1:パネルとボタンのサイズ変更可，2:パネルとボタンとメッセージのサイズ変更可
     boardMagnifyPercent: 120, // パネル拡大率
+    longwiseMode: 0, // 0:時計表示の位置(縦方向)変更しない，1:する
     // // // 自由に書き換えてください:ここまで // // //
     _dummy_: null
 };
@@ -523,6 +524,7 @@ zjs.clock = {
      // 時間を止める
      function hold() {
          prop.clockTick = false;
+         zjs.screen.setLongwise();
          zjs.screen.changeStyle("config", "display", "block");
      }
 
@@ -530,6 +532,7 @@ zjs.clock = {
      function tick() {
          prop.clockTick = true;
          zjs.screen.changeStyle("config", "display", "none");
+         zjs.screen.setLongwise();
      }
 
      zjs.clock.startClock = startClock;
@@ -1011,6 +1014,22 @@ zjs.screen = {
              updateClock();
          }
          changeFontSize();
+         setLongwise();
+     }
+
+     // 時計表示の位置(縦方向)変更
+     function setLongwise() {
+         if (zjs.config.longwiseMode == 0) {
+             return;
+         }
+
+         var pad = 0;
+         if (zjs.clock.clockTick) {
+             // 算出方法は要見直し
+             pad = document.body.clientHeight - document.getElementById("time").offsetHeight - 2 * document.getElementById("timestatus").offsetHeight;
+             pad /= 2;
+         }
+         changeStyle("time", "paddingTop", "" + pad);
      }
 
      // 砂時計表示変更
@@ -1050,6 +1069,8 @@ zjs.screen = {
              changeStyle("timeseclabel", "fontSize", "" + fs + "pt");
              changeStyle("timestatus", "fontSize", "" + fs + "pt");
          }
+
+         setLongwise();
      }
 
      // 時間表示方法の変更(引数は0,1,2)
@@ -1114,6 +1135,7 @@ zjs.screen = {
      // zjs.screen.setTimeColor = setTimeColor;
      zjs.screen.displayTime = displayTime;
      zjs.screen.resize = resize;
+     zjs.screen.setLongwise = setLongwise;
      // zjs.screen.refreshHourglass = refreshHourglass;
      zjs.screen.changeFontSize = changeFontSize;
      zjs.screen.changeTimeColorLabel = changeTimeColorLabel;
