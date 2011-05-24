@@ -83,7 +83,7 @@ module JE
         puts "key: #{key}, value: #{value}" if $DEBUG
         e = n.at('#' + key)
         e.set_attribute("value", value)
-        if /^D/ =~ key
+        if /^D/ =~ key && key != "Dbutton_log"
           e.remove_attribute("id")
         end
       end
@@ -153,8 +153,9 @@ module JE
   <li>This is for managing the presenter's time on the second time scale. It is expected to be used in academic meetings or thesis defenses.</li>
   <li id="readme_key">You can use this timer not only by mouse but also by keyboard. It is ready for a numerical-keypad operation, too, but pay attention to Num Lock.</li>
   <li>When you push the "Reset" button above the control panel, the elapsed time is brought back to zero. If you would like to reflect your entries of the form, push the "Set form" button on the board. These operations are permitted only under suspension.</li>
-  <li id="readmering">The HTML file itself works. But you can play the sounds or give the bell a ring if you have wav files.</li>
-  <li id="iv_readmering" style="display:none">The HTML file itself works. But you can play the sounds or give the bell a ring, if you have wav files and change "ringMode: 0," of this file into "ringMode: null,".</li>
+  <li id="readme_ring">The HTML file itself works. But you can play the sounds or give the bell a ring if you have wav files.</li>
+  <li id="iv_readme_ring" style="display:none">The HTML file itself works. But you can play the sounds or give the bell a ring, if you have wav files and change "ringMode: 0," of this file into "ringMode: null,".</li>
+  <li id="readme_rehearsal">"Rehearsal mode" is activated. After you put the button to the right of "Stop" button, the number increases and the time is kept inside. You can afterward look at the elapsed times slide by slide or scene by scene, with "Log" button.</li>
   <li>The initial character of "zjs" was named after "Zacho No Tomo" ("Chairperson's Companion", forcibly translated into English), a Windows application created by Mr. Tomohiko Imachi. I implemented the features of Zacho No Tomo by JavaScript at first, and have set in various useful functions from my own standpoint to be a comprehensive clock register.</li>
   <li>The latest and old versions of this file are available through <a href="http://github.com/takehiko/zjs/">GitHub</a>.</li>
 </ul>
@@ -189,7 +190,7 @@ EOS
 
       n.search("//*[@id]").each do |e|
         id = e["id"]
-        next if id.index("D") != 0
+        next if id.index("D") != 0 || id == "Dbutton_log"
         tag = e.name
         if /span|div/i =~ tag && e.attribute_nodes.size == 1 && e.children.size == 1
           e.replace(e.child)

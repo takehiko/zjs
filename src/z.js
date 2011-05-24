@@ -103,12 +103,14 @@ zjs.config = {
 
     digitScale: 21, // 文字表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
     minsecLabelScale: 3, // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
-    ringMode: null, // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用
+    ringMode: null, // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用, 3:Audioオブジェクトでchime1.wavのみ
     userAgent: null, // ブラウザ判別用
     hourglassMode: 0, // 0: 砂時計なし, 1:砂時計モード（停止時オフ）, 2:砂時計モード（停止時も維持）
     boardMagnifyMode: 2, // 0:パネルなどの拡大無効，1:パネルとボタンのサイズ変更可，2:パネルとボタンとメッセージのサイズ変更可
     boardMagnifyPercent: 120, // パネル拡大率
     longwiseMode: 0, // 0:時計表示の位置(縦方向)変更しない，1:する
+    rehearsalMode: true, // 発表練習モード
+    countMarkInitial: 0, // zjs.clock.countMarkの初期値
     // // // 自由に書き換えてください:ここまで // // //
     _dummy_: null
 };
@@ -132,6 +134,12 @@ zjs.config = {
          }
          if (prop.noMouseOnClock) { // 時間の上のクリック無効
              document.getElementById("time").onclick = null;
+         }
+         if (!prop.rehearsalMode) { // 発表練習モード無効
+             zjs.screen.changeStyle("buttoncount", "display", "none");
+             zjs.screen.changeStyle("Dbutton_log", "display", "none");
+             zjs.screen.changeStyle("readme_rehearsal", "display", "none");
+             zjs.screen.changeStyle("keybind_rehearsal", "display", "none");
          }
 
          zjs.bell.setupRing();
@@ -259,6 +267,8 @@ zjs.config = {
              // MSIEはAudioがない
              if (prop.userAgent == "chrome") {
                  prop.ringMode = 2;
+             } else if (prop.userAgent == "ipod") {
+                 prop.ringMode = 4;
              } else if (typeof(Audio) != "undefined") {
                  prop.ringMode = 3;
              } else {
@@ -297,6 +307,15 @@ zjs.config = {
              for (var i = 1; i <= 3; i++) {
                  prop.bellWavArray[i] = bellWavDir + bellWavBase + i + ".wav";
              }
+         }
+
+         // r: 発表練習モード
+         if (path.match(/r[a-z_]*off/i)) { // rehearsal_off
+             prop.rehearsalMode = false;
+         }
+         if (path.match(/rc=?(\d+)/)) { // rc: 番号の初期値
+             prop.rehearsalMode = true;
+             prop.countMarkInitial = myParseInt(RegExp.$1);
          }
 
          // key
@@ -379,6 +398,8 @@ zjs.config = {
 
 zjs.clock = {
     clockTick: false, // 時計が進んでいるならtrue
+    clockRing: 0, // ベル待ち時間(100ミリ秒単位．ringMode=4のみ使用)
+    restRing: 0, // あと何回ベルを鳴らすか
     etime1: 0, // 経過時間1(ミリ秒)
     etime2: 0, // 経過時間2(ミリ秒; 停止ボタンで0になる)
     etimeLastMark: 0, // 経過時間(ミリ秒; 前回記録した時間)
@@ -391,6 +412,56 @@ zjs.clock = {
      var prop = zjs.clock;
      var myInterval = null; // setInterval保存
 
+     // タイマ割り込みの処理
+     function interrupt() {
+         if (prop.clockTick) {
+             zjs.screen.updateClock();             
+         }
+         if (prop.clockRing > 0) {
+             prop.clockRing--;
+             if ((prop.restRing == 2 && prop.clockRing <= 12)
+                 || (prop.restRing == 1 && prop.clockRing <= 1)) {
+                 zjs.bell.ring(1);
+                 prop.restRing--;
+             } else if (prop.clockRing == 0) {
+                 intervalOffRing();
+             }
+         }
+     }
+
+     // タイマ割り込み設定（時間を進める）
+     function intervalOnClock() {
+         if (myInterval == null) {
+             myInterval = setInterval("zjs.clock.interrupt()", 100);
+         }
+     }
+
+     // タイマ割り込み設定（時間を止める）
+     function intervalOffClock() {
+         if (myInterval != null && prop.clockRing == 0) {
+             clearInterval(myInterval);
+             myInterval = null;
+         }
+     }
+
+     // タイマ割り込み設定（ベル用の時間を進める）
+     function intervalOnRing(count) {
+         prop.restRing = count;
+         prop.clockRing = count * 12;
+         if (myInterval == null) {
+             myInterval = setInterval("zjs.clock.interrupt()", 100);
+         }
+     }
+
+     // タイマ割り込み設定（ベル用の時間を止める）
+     function intervalOffRing() {
+         prop.clockRing = 0;
+         if (myInterval != null && !prop.clockTick) {
+             clearInterval(myInterval);
+             myInterval = null;
+         }
+     }
+
      // 計時開始
      function startClock() {
          if (!prop.clockTick) {
@@ -398,7 +469,8 @@ zjs.clock = {
                  zjs.board.appendToLog("start", true);
              }
 
-             myInterval = setInterval("zjs.screen.updateClock()", 100);
+             intervalOnClock();
+             // myInterval = setInterval("zjs.screen.updateClock()", 100);
              prop.timeStart = (new Date()).getTime();
              tick();
              zjs.screen.changeStyle("buttonstart", "display", "none");
@@ -411,10 +483,11 @@ zjs.clock = {
      function stopClock() {
          if (prop.clockTick) {
              hold();
-             if (myInterval != null) {
-                 clearInterval(myInterval);
-                 myInterval = null;
-             }
+             intervalOffClock();
+             // if (myInterval != null) {
+             //     clearInterval(myInterval);
+             //     myInterval = null;
+             // }
              zjs.screen.updateClock();
              prop.etime1 = prop.etime1 + prop.etime2;
              prop.etime2 = 0;
@@ -435,7 +508,7 @@ zjs.clock = {
      function toggleClock() {
          if (prop.clockTick) {
              stopClock();
-             if (prop.countMark > 0) {
+             if (prop.countMark > zjs.config.countMarkInitial) {
                  prop.markLapTime();
              }
          } else {
@@ -454,7 +527,8 @@ zjs.clock = {
              prop.etime1 = 0;
              prop.etime2 = 0;
              prop.etimeLastMark = 0;
-             prop.countMark = 0;
+             prop.countMark = zjs.config.countMarkInitial;
+             prop.displayButtonCount();
              zjs.screen.displayTime(0);
 
              if (zjs.screen.color.index == 0) {
@@ -499,9 +573,14 @@ zjs.clock = {
          var etime = getElapsedTime();
          var laptime = etime - prop.etimeLastMark;
          prop.etimeLastMark = etime;
-         prop.countMark++;
-
+         if (zjs.config.countMarkInitial == 0) {
+             prop.countMark++;
+         }
          zjs.board.appendToLog((paren == 0 ? "&lt;" : "[") + prop.countMark + (paren == 0 ? "&gt; " : "] ") + timeToString(etime) + " (+" + timeToString(laptime) + ")", false);
+         if (zjs.config.countMarkInitial != 0) {
+             prop.countMark++;
+         }
+         prop.displayButtonCount();
      }
 
      // 経過時間(ラップタイム)の記録
@@ -526,6 +605,7 @@ zjs.clock = {
          prop.clockTick = false;
          zjs.screen.setLongwise();
          zjs.screen.changeStyle("config", "display", "block");
+         displayButtonCount();
      }
 
      // 時間を動かす
@@ -533,8 +613,35 @@ zjs.clock = {
          prop.clockTick = true;
          zjs.screen.changeStyle("config", "display", "none");
          zjs.screen.setLongwise();
+         displayButtonCount();
      }
 
+     // 経過時間の記録、ログの表示/非表示
+     function markTimeOrDisplayLog() {
+         if (zjs.clock.clockTick) {
+             zjs.clock.markTime(); // 経過時間の記録
+             zjs.screen.updateTitle();
+         } else {
+             zjs.board.displayLog(); // ログの表示/非表示
+         }
+     }
+
+     // 発表練習用カウンタの更新
+     function displayButtonCount() {
+         if (!zjs.config.rehearsalMode || 
+             !prop.clockTick && prop.countMark == zjs.config.countMarkInitial) {
+             zjs.screen.changeStyle("buttoncount", "display", "none");
+         } else {
+             document.getElementById("buttoncount").value = "<" + prop.countMark + ">";
+             zjs.screen.changeStyle("buttoncount", "display", "inline");
+         }
+     }
+
+     zjs.clock.interrupt = interrupt;
+     zjs.clock.intervalOnClock = intervalOnClock;
+     zjs.clock.intervalOffClock = intervalOffClock;
+     zjs.clock.intervalOnRing = intervalOnRing;
+     zjs.clock.intervalOffRing = intervalOffRing;
      zjs.clock.startClock = startClock;
      zjs.clock.stopClock = stopClock;
      zjs.clock.toggleClock = toggleClock;
@@ -545,6 +652,8 @@ zjs.clock = {
      zjs.clock.getElapsedTime = getElapsedTime;
      zjs.clock.hold = hold;
      zjs.clock.tick = tick;
+     zjs.clock.markTimeOrDisplayLog = markTimeOrDisplayLog;
+     zjs.clock.displayButtonCount = displayButtonCount;
 })();
 
 zjs.key = {
@@ -608,12 +717,9 @@ zjs.key = {
              if (!zjs.clock.clockTick) {
                  zjs.board.displayReadme();
              }
-         } else if (code == 46 || code == 190 || code == 50) { // [2], [.]
-             if (zjs.clock.clockTick) {
-                 zjs.clock.markTime(); // 経過時間の記録
-                 zjs.screen.updateTitle();
-             } else {
-                 zjs.board.displayLog(); // ログの表示/非表示
+         } else if (code == 46 || code == 190 || code == 50) { // [2], [.]: 経過時間の記録、ログの表示/非表示
+             if (zjs.config.rehearsalMode) {
+                 zjs.clock.markTimeOrDisplayLog();
              }
          } else if (code == 80 || code == 56) { // [P], [8]: 時間表示切替
              zjs.screen.toggleTimeColorLabel();
@@ -844,8 +950,8 @@ zjs.bell = {
 
          switch (prop.ringMode) {
          case 0:
-             zjs.screen.changeStyle("readmering", "display", "none");
-             zjs.screen.changeStyle("iv_readmering", "display", "list-item");
+             zjs.screen.changeStyle("readme_ring", "display", "none");
+             zjs.screen.changeStyle("iv_readme_ring", "display", "list-item");
              zjs.screen.changeStyle("belltest", "display", "none");
              for (var i = 0; i <= 3; i++) {
                  zjs.screen.changeStyle("bellsort" + i, "display", "none");
@@ -862,6 +968,10 @@ zjs.bell = {
              for (var i = 1; i <= 3; i++) {
                  prop.audioArray[i] = new Audio(prop.bellWavArray[i]);
              }
+             break;
+         case 4:
+             prop.audioArray[1] = new Audio(prop.bellWavArray[1]);
+             prop.audioArray[2] = prop.audioArray[3] = prop.audioArray[1];
              break;
          default:
              break;
@@ -889,6 +999,16 @@ zjs.bell = {
                  break;
              case 3:
                  prop.audioArray[wavid].play();
+                 break;
+             case 4:
+                 if (wavid > 1 && zjs.clock.clockRing > 0) {
+                     break;
+                 }
+                 prop.audioArray[1].pause();
+                 prop.audioArray[1].play();
+                 if (wavid > 1) {
+                     zjs.clock.intervalOnRing(wavid - 1);
+                 }
                  break;
              default:
                  break;
@@ -1086,7 +1206,7 @@ zjs.screen = {
      function updateTitle() {
          if (!zjs.config.noChangeTitle) {
              var title = zjs.config.titleArray[prop.color.index];
-             if (zjs.clock.countMark > 0) {
+             if (zjs.clock.countMark > zjs.config.countMarkInitial) {
                  title = "<" + zjs.clock.countMark + "> " + title;
              }
              document.title = title;

@@ -30,6 +30,7 @@ input, select {font-size:100%}
 <input id="buttonstart" type="button" value="開始" onclick="zjs.clock.startClock()" style="display:inline">
 <input id="buttonstop" type="button" value="停止" onclick="zjs.clock.stopClock()" style="display:none">
 <input id="buttonreset" type="button" value="リセット" onclick="zjs.clock.resetClock()" style="display:inline">
+<input id="buttoncount" type="button" value="&lt;1&gt;" onclick="zjs.clock.markTimeOrDisplayLog()" style="display:inline">
 </div>
 <div id="config">
 <table border="0" id="config_table">
@@ -84,8 +85,9 @@ input, select {font-size:100%}
   <li><a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま〜 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
   <li id="readme_key">マウスのほか、キーボードでも操作ができます。テンキーをご使用の際は、あらかじめ、Num Lockがオンになっているかご確認ください。</li>
   <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
-  <li id="readmering">このファイル単体で動きますが、ベルのwavファイルを用意すれば、音を鳴らすこともできます。</li>
-  <li id="iv_readmering" style="display:none">このファイル単体で動きますが、ベルのwavファイルを用意した上で、このファイルの中の「ringMode: 0,」を「ringMode: null,」に書き換えれば、音を鳴らすこともできます。</li>
+  <li id="readme_ring">このファイル単体で動きますが、ベルのwavファイルを用意すれば、音を鳴らすこともできます。</li>
+  <li id="iv_readme_ring" style="display:none">このファイル単体で動きますが、ベルのwavファイルを用意した上で、このファイルの中の「ringMode: 0,」を「ringMode: null,」に書き換えれば、音を鳴らすこともできます。</li>
+  <li id="readme_rehearsal">「発表練習モード」が有効になっています。時間経過中に、「停止」の右のボタンを押すと、数字が一つ増え、時間を記録します。スライド（またはシーン）ごとの時間を知るのにご利用ください。</li>
   <li>「zjs」という名前の由来は、「座長の友に対抗して、座長のjs」です。jsはJavaScriptの略なのですが、jsを筆記体で書けば「友」の草書体に似ていますよね！</li>
   <li>このファイルの最新版と過去のいくつかのバージョンは、<a href="http://github.com/takehiko/zjs/">GitHub</a> から取得可能です。</li>
 </ul>
@@ -99,7 +101,7 @@ input, select {font-size:100%}
 [7] [K]: <span id="Dkeybind_keybind">（停止時）ショートカットキーの表示/非表示</span><br>
 [8] [P]: <span id="Dkeybind_countmode">時間表示の切替</span><br>
 [9] [H]: <span id="Dkeybind_readme">「はじめにお読みください」の表示/非表示</span><br>
-[2] [.]: <span id="Dkeybind_log">カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。</span><br>
+<span id="keybind_rehearsal">[2] [.]: <span id="Dkeybind_log">カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。</span><br></span>
 <span id="keybind_magnify">[B]: <span id="Dkeybind_magnify">（停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%→…）</span><br></span>
 [G]: <span id="Dkeybind_hourglass">砂時計モードの表示/非表示</span>
 </div>

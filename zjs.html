@@ -111,6 +111,8 @@ zjs.config = {
     boardMagnifyMode: 2,
     boardMagnifyPercent: 120,
     longwiseMode: 0,
+    rehearsalMode: true,
+    countMarkInitial: 0,
     _dummy_: null
 };
 
@@ -132,6 +134,12 @@ zjs.config = {
          }
          if (prop.noMouseOnClock) {
              document.getElementById("time").onclick = null;
+         }
+         if (!prop.rehearsalMode) {
+             zjs.screen.changeStyle("buttoncount", "display", "none");
+             zjs.screen.changeStyle("Dbutton_log", "display", "none");
+             zjs.screen.changeStyle("readme_rehearsal", "display", "none");
+             zjs.screen.changeStyle("keybind_rehearsal", "display", "none");
          }
 
          zjs.bell.setupRing();
@@ -241,6 +249,8 @@ zjs.config = {
          if (prop.ringMode == null) {
              if (prop.userAgent == "chrome") {
                  prop.ringMode = 2;
+             } else if (prop.userAgent == "ipod") {
+                 prop.ringMode = 4;
              } else if (typeof(Audio) != "undefined") {
                  prop.ringMode = 3;
              } else {
@@ -275,6 +285,14 @@ zjs.config = {
              for (var i = 1; i <= 3; i++) {
                  prop.bellWavArray[i] = bellWavDir + bellWavBase + i + ".wav";
              }
+         }
+
+         if (path.match(/r[a-z_]*off/i)) {
+             prop.rehearsalMode = false;
+         }
+         if (path.match(/rc=?(\d+)/)) {
+             prop.rehearsalMode = true;
+             prop.countMarkInitial = myParseInt(RegExp.$1);
          }
 
          if (path.match(/nokey/i)) {
@@ -348,6 +366,8 @@ zjs.config = {
 
 zjs.clock = {
     clockTick: false,
+    clockRing: 0,
+    restRing: 0,
     etime1: 0,
     etime2: 0,
     etimeLastMark: 0,
@@ -360,13 +380,59 @@ zjs.clock = {
      var prop = zjs.clock;
      var myInterval = null;
 
+     function interrupt() {
+         if (prop.clockTick) {
+             zjs.screen.updateClock();             
+         }
+         if (prop.clockRing > 0) {
+             prop.clockRing--;
+             if ((prop.restRing == 2 && prop.clockRing <= 12)
+                 || (prop.restRing == 1 && prop.clockRing <= 1)) {
+                 zjs.bell.ring(1);
+                 prop.restRing--;
+             } else if (prop.clockRing == 0) {
+                 intervalOffRing();
+             }
+         }
+     }
+
+     function intervalOnClock() {
+         if (myInterval == null) {
+             myInterval = setInterval("zjs.clock.interrupt()", 100);
+         }
+     }
+
+     function intervalOffClock() {
+         if (myInterval != null && prop.clockRing == 0) {
+             clearInterval(myInterval);
+             myInterval = null;
+         }
+     }
+
+     function intervalOnRing(count) {
+         prop.restRing = count;
+         prop.clockRing = count * 12;
+         if (myInterval == null) {
+             myInterval = setInterval("zjs.clock.interrupt()", 100);
+         }
+     }
+
+     function intervalOffRing() {
+         prop.clockRing = 0;
+         if (myInterval != null && !prop.clockTick) {
+             clearInterval(myInterval);
+             myInterval = null;
+         }
+     }
+
      function startClock() {
          if (!prop.clockTick) {
              if (prop.etime1 == 0) {
                  zjs.board.appendToLog("start", true);
              }
 
-             myInterval = setInterval("zjs.screen.updateClock()", 100);
+             intervalOnClock();
+             // myInterval = setInterval("zjs.screen.updateClock()", 100);
              prop.timeStart = (new Date()).getTime();
              tick();
              zjs.screen.changeStyle("buttonstart", "display", "none");
@@ -378,10 +444,7 @@ zjs.clock = {
      function stopClock() {
          if (prop.clockTick) {
              hold();
-             if (myInterval != null) {
-                 clearInterval(myInterval);
-                 myInterval = null;
-             }
+             intervalOffClock();
              zjs.screen.updateClock();
              prop.etime1 = prop.etime1 + prop.etime2;
              prop.etime2 = 0;
@@ -401,7 +464,7 @@ zjs.clock = {
      function toggleClock() {
          if (prop.clockTick) {
              stopClock();
-             if (prop.countMark > 0) {
+             if (prop.countMark > zjs.config.countMarkInitial) {
                  prop.markLapTime();
              }
          } else {
@@ -419,7 +482,8 @@ zjs.clock = {
              prop.etime1 = 0;
              prop.etime2 = 0;
              prop.etimeLastMark = 0;
-             prop.countMark = 0;
+             prop.countMark = zjs.config.countMarkInitial;
+             prop.displayButtonCount();
              zjs.screen.displayTime(0);
 
              if (zjs.screen.color.index == 0) {
@@ -462,9 +526,14 @@ zjs.clock = {
          var etime = getElapsedTime();
          var laptime = etime - prop.etimeLastMark;
          prop.etimeLastMark = etime;
-         prop.countMark++;
-
+         if (zjs.config.countMarkInitial == 0) {
+             prop.countMark++;
+         }
          zjs.board.appendToLog((paren == 0 ? "&lt;" : "[") + prop.countMark + (paren == 0 ? "&gt; " : "] ") + timeToString(etime) + " (+" + timeToString(laptime) + ")", false);
+         if (zjs.config.countMarkInitial != 0) {
+             prop.countMark++;
+         }
+         prop.displayButtonCount();
      }
 
      function markLapTime(paren) {
@@ -486,14 +555,40 @@ zjs.clock = {
          prop.clockTick = false;
          zjs.screen.setLongwise();
          zjs.screen.changeStyle("config", "display", "block");
+         displayButtonCount();
      }
 
      function tick() {
          prop.clockTick = true;
          zjs.screen.changeStyle("config", "display", "none");
          zjs.screen.setLongwise();
+         displayButtonCount();
      }
 
+     function markTimeOrDisplayLog() {
+         if (zjs.clock.clockTick) {
+             zjs.clock.markTime();
+             zjs.screen.updateTitle();
+         } else {
+             zjs.board.displayLog();
+         }
+     }
+
+     function displayButtonCount() {
+         if (!zjs.config.rehearsalMode || 
+             !prop.clockTick && prop.countMark == zjs.config.countMarkInitial) {
+             zjs.screen.changeStyle("buttoncount", "display", "none");
+         } else {
+             document.getElementById("buttoncount").value = "<" + prop.countMark + ">";
+             zjs.screen.changeStyle("buttoncount", "display", "inline");
+         }
+     }
+
+     zjs.clock.interrupt = interrupt;
+     zjs.clock.intervalOnClock = intervalOnClock;
+     zjs.clock.intervalOffClock = intervalOffClock;
+     zjs.clock.intervalOnRing = intervalOnRing;
+     zjs.clock.intervalOffRing = intervalOffRing;
      zjs.clock.startClock = startClock;
      zjs.clock.stopClock = stopClock;
      zjs.clock.toggleClock = toggleClock;
@@ -503,6 +598,8 @@ zjs.clock = {
      zjs.clock.getElapsedTime = getElapsedTime;
      zjs.clock.hold = hold;
      zjs.clock.tick = tick;
+     zjs.clock.markTimeOrDisplayLog = markTimeOrDisplayLog;
+     zjs.clock.displayButtonCount = displayButtonCount;
 })();
 
 zjs.key = {
@@ -565,11 +662,8 @@ zjs.key = {
                  zjs.board.displayReadme();
              }
          } else if (code == 46 || code == 190 || code == 50) {
-             if (zjs.clock.clockTick) {
-                 zjs.clock.markTime();
-                 zjs.screen.updateTitle();
-             } else {
-                 zjs.board.displayLog();
+             if (zjs.config.rehearsalMode) {
+                 zjs.clock.markTimeOrDisplayLog();
              }
          } else if (code == 80 || code == 56) {
              zjs.screen.toggleTimeColorLabel();
@@ -785,8 +879,8 @@ zjs.bell = {
 
          switch (prop.ringMode) {
          case 0:
-             zjs.screen.changeStyle("readmering", "display", "none");
-             zjs.screen.changeStyle("iv_readmering", "display", "list-item");
+             zjs.screen.changeStyle("readme_ring", "display", "none");
+             zjs.screen.changeStyle("iv_readme_ring", "display", "list-item");
              zjs.screen.changeStyle("belltest", "display", "none");
              for (var i = 0; i <= 3; i++) {
                  zjs.screen.changeStyle("bellsort" + i, "display", "none");
@@ -803,6 +897,10 @@ zjs.bell = {
              for (var i = 1; i <= 3; i++) {
                  prop.audioArray[i] = new Audio(prop.bellWavArray[i]);
              }
+             break;
+         case 4:
+             prop.audioArray[1] = new Audio(prop.bellWavArray[1]);
+             prop.audioArray[2] = prop.audioArray[3] = prop.audioArray[1];
              break;
          default:
              break;
@@ -829,6 +927,16 @@ zjs.bell = {
                  break;
              case 3:
                  prop.audioArray[wavid].play();
+                 break;
+             case 4:
+                 if (wavid > 1 && zjs.clock.clockRing > 0) {
+                     break;
+                 }
+                 prop.audioArray[1].pause();
+                 prop.audioArray[1].play();
+                 if (wavid > 1) {
+                     zjs.clock.intervalOnRing(wavid - 1);
+                 }
                  break;
              default:
                  break;
@@ -1015,7 +1123,7 @@ zjs.screen = {
      function updateTitle() {
          if (!zjs.config.noChangeTitle) {
              var title = zjs.config.titleArray[prop.color.index];
-             if (zjs.clock.countMark > 0) {
+             if (zjs.clock.countMark > zjs.config.countMarkInitial) {
                  title = "<" + zjs.clock.countMark + "> " + title;
              }
              document.title = title;
@@ -1077,7 +1185,7 @@ zjs.screen = {
 <span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">min</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">sec</span>
 </div>
 <div id="button">
-<input id="buttonstart" type="button" value="Start" onclick="zjs.clock.startClock()" style="display:inline"><input id="buttonstop" type="button" value="Stop" onclick="zjs.clock.stopClock()" style="display:none"><input id="buttonreset" type="button" value="Reset" onclick="zjs.clock.resetClock()" style="display:inline">
+<input id="buttonstart" type="button" value="Start" onclick="zjs.clock.startClock()" style="display:inline"><input id="buttonstop" type="button" value="Stop" onclick="zjs.clock.stopClock()" style="display:none"><input id="buttonreset" type="button" value="Reset" onclick="zjs.clock.resetClock()" style="display:inline"><input id="buttoncount" type="button" value="&lt;1&gt;" onclick="zjs.clock.markTimeOrDisplayLog()" style="display:inline">
 </div>
 <div id="config">
 <table border="0" id="config_table">
@@ -1088,7 +1196,7 @@ zjs.screen = {
 <input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec</span>
 </td>
     <td id="bellsort2">
-<span>/ Bell</span> <select id="cfgwav2"><option value="0">None</option>
+<span> / Bell</span> <select id="cfgwav2"><option value="0">None</option>
 <option value="1">1</option>
 <option value="2" selected>2</option>
 <option value="3">3</option></select>
@@ -1101,7 +1209,7 @@ zjs.screen = {
 <input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec <span style="font-size:75%">before finishing talk</span></span>
 </td>
     <td id="bellsort0">
-<span>/ Bell</span> <select id="cfgwav0"><option value="0">None</option>
+<span> / Bell</span> <select id="cfgwav0"><option value="0">None</option>
 <option value="1" selected>1</option>
 <option value="2">2</option>
 <option value="3">3</option></select>
@@ -1114,7 +1222,7 @@ zjs.screen = {
 <input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec <span style="font-size:75%">before finishing talk</span></span>
 </td>
     <td id="bellsort1">
-<span>/ Bell</span> <select id="cfgwav1"><option value="0" selected>None</option>
+<span> / Bell</span> <select id="cfgwav1"><option value="0" selected>None</option>
 <option value="1">1</option>
 <option value="2">2</option>
 <option value="3">3</option></select>
@@ -1127,7 +1235,7 @@ zjs.screen = {
 <input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec</span>
 </td>
     <td id="bellsort3">
-<span>/ Bell</span> <select id="cfgwav3"><option value="0">None</option>
+<span> / Bell</span> <select id="cfgwav3"><option value="0">None</option>
 <option value="1">1</option>
 <option value="2">2</option>
 <option value="3" selected>3</option></select>
@@ -1140,7 +1248,7 @@ zjs.screen = {
   </tr>
 <tr>
 <td colspan="4">
-      <input type="button" value="Read me first" onclick="zjs.board.displayReadme()"><input type="button" value="Shortcut keys" onclick="zjs.board.displayKeybind()"><input type="button" value="Log" onclick="zjs.board.displayLog()">
+      <input type="button" value="Read me first" onclick="zjs.board.displayReadme()"><input type="button" value="Shortcut keys" onclick="zjs.board.displayKeybind()"><input id="Dbutton_log" type="button" value="Log" onclick="zjs.board.displayLog()">
 </td>
   </tr>
 <tr id="belltest">
@@ -1153,8 +1261,9 @@ zjs.screen = {
 <li>This is for managing the presenter's time on the second time scale. It is expected to be used in academic meetings or thesis defenses.</li>
   <li id="readme_key">You can use this timer not only by mouse but also by keyboard. It is ready for a numerical-keypad operation, too, but pay attention to Num Lock.</li>
   <li>When you push the "Reset" button above the control panel, the elapsed time is brought back to zero. If you would like to reflect your entries of the form, push the "Set form" button on the board. These operations are permitted only under suspension.</li>
-  <li id="readmering">The HTML file itself works. But you can play the sounds or give the bell a ring if you have wav files.</li>
-  <li id="iv_readmering" style="display:none">The HTML file itself works. But you can play the sounds or give the bell a ring, if you have wav files and change "ringMode: 0," of this file into "ringMode: null,".</li>
+  <li id="readme_ring">The HTML file itself works. But you can play the sounds or give the bell a ring if you have wav files.</li>
+  <li id="iv_readme_ring" style="display:none">The HTML file itself works. But you can play the sounds or give the bell a ring, if you have wav files and change "ringMode: 0," of this file into "ringMode: null,".</li>
+  <li id="readme_rehearsal">"Rehearsal mode" is activated. After you put the button to the right of "Stop" button, the number increases and the time is kept inside. You can afterward look at the elapsed times slide by slide or scene by scene, with "Log" button.</li>
   <li>The initial character of "zjs" was named after "Zacho No Tomo" ("Chairperson's Companion", forcibly translated into English), a Windows application created by Mr. Tomohiko Imachi. I implemented the features of Zacho No Tomo by JavaScript at first, and have set in various useful functions from my own standpoint to be a comprehensive clock register.</li>
   <li>The latest and old versions of this file are available through <a href="http://github.com/takehiko/zjs/">GitHub</a>.</li>
 </ul></div>
@@ -1167,8 +1276,8 @@ zjs.screen = {
 [3] [M]: Enlarge the clock display.<br>
 [7] [K]: Turn on/off the shortcut instruction.<br>
 [8] [P]: Change the count-up/down mode.<br>
-[9] [H]: Turn on/off the readme.<br>
-[2] [.]: Turn on/off the log (in pausing). Record the clock time (in counting). Use it at rehearsal.<br><span id="keybind_magnify">[B]: Change the size of buttons and some components (in pausing).<br></span>
+[9] [H]: Turn on/off the readme.<br><span id="keybind_rehearsal">[2] [.]: Turn on/off the log (in pausing). Record the clock time (in counting). Use it at rehearsal.<br></span>
+<span id="keybind_magnify">[B]: Change the size of buttons and some components (in pausing).<br></span>
 [G]: Change the hourglass mode.
 </div>
 <div id="iv_keybind" style="display:none">Keyboard operations are disabled.</div>
@@ -1179,6 +1288,7 @@ zjs.screen = {
 </div>
 <div id="advice" style="display:none">Please make sure the screen is not black or
 a screen-saver does not start
-after you do nothing for a number of minutes.</div>
+after you do nothing for a number of minutes.
+</div>
 </body>
 </html>
