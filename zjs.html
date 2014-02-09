@@ -247,14 +247,12 @@ zjs.config = {
              prop.ringMode = myParseInt(RegExp.$1);
          }
          if (prop.ringMode == null) {
-             if (prop.userAgent == "chrome") {
+             if (prop.userAgent == "msie") {
                  prop.ringMode = 2;
-             } else if (prop.userAgent == "ipod") {
-                 prop.ringMode = 4;
              } else if (typeof(Audio) != "undefined") {
                  prop.ringMode = 3;
              } else {
-                 prop.ringMode = 2;
+                 prop.ringMode = 0;
              }
          }
 
@@ -1191,7 +1189,7 @@ zjs.screen = {
 <table border="0" id="config_table">
 <tr id="timetr2">
 <th>Talk time</th>
-    <td></td>
+    <td> </td>
     <td>
 <input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec</span>
 </td>
@@ -1230,7 +1228,7 @@ zjs.screen = {
   </tr>
 <tr id="timetr3">
 <th>Q&amp;A time</th>
-    <td></td>
+    <td> </td>
     <td>
 <input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec</span>
 </td>

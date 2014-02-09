@@ -103,7 +103,7 @@ zjs.config = {
 
     digitScale: 21, // 文字表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
     minsecLabelScale: 3, // 「分」「秒」表示の拡大率(ウィンドウ幅に対する割合，パーセンテージ; 0は拡大しない)
-    ringMode: null, // null:ブラウザで判定, 0:鳴らさない, 1:そのつどsound内に書き込む, 2:あらかじめsound内に書き込んでPlay(), 3:Audioオブジェクトを使用, 3:Audioオブジェクトでchime1.wavのみ
+    ringMode: null, // null:ブラウザで判定, 0:鳴らさない, 1以上:鳴らす(方法はこのファイルで「w: 」を検索)
     userAgent: null, // ブラウザ判別用
     hourglassMode: 0, // 0: 砂時計なし, 1:砂時計モード（停止時オフ）, 2:砂時計モード（停止時も維持）
     boardMagnifyMode: 2, // 0:パネルなどの拡大無効，1:パネルとボタンのサイズ変更可，2:パネルとボタンとメッセージのサイズ変更可
@@ -258,22 +258,25 @@ zjs.config = {
          }
 
          // w: ベルモード
+         // prop.ringMode = null : ブラウザで判定
+         // prop.ringMode = 0 : 鳴らさない
+         // prop.ringMode = 1 : そのつどsound内に書き込む
+         // prop.ringMode = 2 : あらかじめsound内に書き込んでPlay()
+         // prop.ringMode = 3 : Audioオブジェクトを使用
+         // prop.ringMode = 4 : Audioオブジェクトを使用し，ファイルはchime1.wavのみ
          if (path.match(/w=?(\d+)/)) {
              prop.ringMode = myParseInt(RegExp.$1);
          }
          if (prop.ringMode == null) {
-             // Google ChromeはAudioがあるもののringMethod==3では鳴らない
-             // FirefoxはringMethod==2ではzjs.bell.ring(1);で鳴らない
-             // MSIEはAudioがない
-             if (prop.userAgent == "chrome") {
+             if (prop.userAgent == "msie") {
                  prop.ringMode = 2;
-             } else if (prop.userAgent == "ipod") {
-                 prop.ringMode = 4;
              } else if (typeof(Audio) != "undefined") {
                  prop.ringMode = 3;
              } else {
-                 prop.ringMode = 2;
+                 prop.ringMode = 0;
              }
+             // 以前の設定: chromeなら2, ipodなら4, Audioが利用可能なら3,
+             // いずれでもなければ2
          }
 
          // h: 砂時計モード
