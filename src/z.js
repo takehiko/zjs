@@ -90,6 +90,7 @@ zjs.config = {
     titleArray: new Array( // タイトルバー
         "zjs: 発表時間はカウントダウン、質疑時間はカウントアップ",
         "zjs: 発表・質疑の合計時間をカウントアップ",
+        "zjs",
         "zjs"
     ),
 
@@ -111,6 +112,7 @@ zjs.config = {
     longwiseMode: 0, // 0:時計表示の位置(縦方向)変更しない，1:する
     rehearsalMode: true, // 発表練習モード
     countMarkInitial: 0, // zjs.clock.countMarkの初期値
+    colorIndex: 2, // 0:カウントダウン+タイトルバー詳細表示, 1:カウントアップ+タイトルバー詳細表示, 2:カウントダウン, 3:カウントアップ
     // // // 自由に書き換えてください:ここまで // // //
     _dummy_: null
 };
@@ -145,7 +147,7 @@ zjs.config = {
          zjs.bell.setupRing();
          zjs.screen.changeFontSize();
          zjs.clock.hold();
-         zjs.screen.changeTimeColorLabel(zjs.screen.color.index);
+         zjs.screen.changeTimeColorLabel(prop.colorIndex);
          zjs.clock.resetClock();
          zjs.board.setForm();
          zjs.board.setMagnify();
@@ -310,6 +312,11 @@ zjs.config = {
              for (var i = 1; i <= 3; i++) {
                  prop.bellWavArray[i] = bellWavDir + bellWavBase + i + ".wav";
              }
+         }
+
+         // c: 時刻表示モード
+         if (path.match(/c=?(\d+)/)) {
+             prop.colorIndex = myParseInt(RegExp.$1);
          }
 
          // r: 発表練習モード
@@ -534,9 +541,7 @@ zjs.clock = {
              prop.displayButtonCount();
              zjs.screen.displayTime(0);
 
-             if (zjs.screen.color.index == 0) {
-                 zjs.screen.changeTimeColorLabel(2);
-             }
+             zjs.screen.changeTimeColorLabel(zjs.config.colorIndex);
 
              zjs.screen.updateTitle();
              document.getElementById("buttonstart").value = "開始";
@@ -1026,7 +1031,7 @@ zjs.bell = {
 zjs.screen = {
     color: { // 時計表示の色．初期化は直後の匿名関数内で行う
         base: null, // 色セットのリスト
-        index: 2, // 時刻表示モード(0,1,2)．zjs.config.titleArrayとも連携
+        index: 2, // 時刻表示(0,1,2,3)．zjs.config.colorIndexの値で上書きされる
         array: null // 色セット
     },
     timeColor: null, // 時刻表示の色．初期化は直後の匿名関数内で行う
@@ -1044,8 +1049,7 @@ zjs.screen = {
 (function () {
      var prop = zjs.screen;
 
-     prop.color.base = new Array(zjs.config.colorArray1, zjs.config.colorArray2, zjs.config.colorArray1);
-     prop.color.index = 2;
+     prop.color.base = new Array(zjs.config.colorArray1, zjs.config.colorArray2, zjs.config.colorArray1, zjs.config.colorArray1);
      prop.color.array = prop.color.base[prop.color.index];
      prop.timeColor = prop.color.array[0].timeColor;
      prop.statusLabel = prop.color.array[0].statusLabel;
@@ -1095,7 +1099,7 @@ zjs.screen = {
      function displayTime(etime) {
          var dtime; // 経過時間(ミリ秒)
 
-         if (prop.color.index == 1) {
+         if (prop.color.index & 1 == 1) {
              dtime = etime; // 経過時間
          } else if (etime <= zjs.bell.bellArray[2].etime) {
              dtime = zjs.bell.bellArray[2].etime - etime; // 発表残り時間(ミリ秒)
@@ -1196,7 +1200,7 @@ zjs.screen = {
          setLongwise();
      }
 
-     // 時間表示方法の変更(引数は0,1,2)
+     // 時間表示方法の変更(引数は0,1,2,3)
      function changeTimeColorLabel(index) {
          prop.color.index = index;
          prop.color.array = prop.color.base[prop.color.index];

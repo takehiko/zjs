@@ -111,6 +111,7 @@ zjs.config = {
     titleArray: new Array( // タイトルバー
         "zjs: 発表時間はカウントダウン、質疑時間はカウントアップ",
         "zjs: 発表・質疑の合計時間をカウントアップ",
+        "zjs",
         "zjs"
     ),
 
@@ -132,6 +133,7 @@ zjs.config = {
     longwiseMode: 0, // 0:時計表示の位置(縦方向)変更しない，1:する
     rehearsalMode: true, // 発表練習モード
     countMarkInitial: 0, // zjs.clock.countMarkの初期値
+    colorIndex: 2, // 0:カウントダウン+タイトルバー詳細表示, 1:カウントアップ+タイトルバー詳細表示, 2:カウントダウン, 3:カウントアップ
     // // // 自由に書き換えてください:ここまで // // //
     _dummy_: null
 };
@@ -166,7 +168,7 @@ zjs.config = {
          zjs.bell.setupRing();
          zjs.screen.changeFontSize();
          zjs.clock.hold();
-         zjs.screen.changeTimeColorLabel(zjs.screen.color.index);
+         zjs.screen.changeTimeColorLabel(prop.colorIndex);
          zjs.clock.resetClock();
          zjs.board.setForm();
          zjs.board.setMagnify();
@@ -331,6 +333,11 @@ zjs.config = {
              for (var i = 1; i <= 3; i++) {
                  prop.bellWavArray[i] = bellWavDir + bellWavBase + i + ".wav";
              }
+         }
+
+         // c: 時刻表示モード
+         if (path.match(/c=?(\d+)/)) {
+             prop.colorIndex = myParseInt(RegExp.$1);
          }
 
          // r: 発表練習モード
@@ -555,9 +562,7 @@ zjs.clock = {
              prop.displayButtonCount();
              zjs.screen.displayTime(0);
 
-             if (zjs.screen.color.index == 0) {
-                 zjs.screen.changeTimeColorLabel(2);
-             }
+             zjs.screen.changeTimeColorLabel(zjs.config.colorIndex);
 
              zjs.screen.updateTitle();
              document.getElementById("buttonstart").value = "開始";
@@ -1047,7 +1052,7 @@ zjs.bell = {
 zjs.screen = {
     color: { // 時計表示の色．初期化は直後の匿名関数内で行う
         base: null, // 色セットのリスト
-        index: 2, // 時刻表示モード(0,1,2)．zjs.config.titleArrayとも連携
+        index: 2, // 時刻表示(0,1,2,3)．zjs.config.colorIndexの値で上書きされる
         array: null // 色セット
     },
     timeColor: null, // 時刻表示の色．初期化は直後の匿名関数内で行う
@@ -1065,8 +1070,7 @@ zjs.screen = {
 (function () {
      var prop = zjs.screen;
 
-     prop.color.base = new Array(zjs.config.colorArray1, zjs.config.colorArray2, zjs.config.colorArray1);
-     prop.color.index = 2;
+     prop.color.base = new Array(zjs.config.colorArray1, zjs.config.colorArray2, zjs.config.colorArray1, zjs.config.colorArray1);
      prop.color.array = prop.color.base[prop.color.index];
      prop.timeColor = prop.color.array[0].timeColor;
      prop.statusLabel = prop.color.array[0].statusLabel;
@@ -1116,7 +1120,7 @@ zjs.screen = {
      function displayTime(etime) {
          var dtime; // 経過時間(ミリ秒)
 
-         if (prop.color.index == 1) {
+         if (prop.color.index & 1 == 1) {
              dtime = etime; // 経過時間
          } else if (etime <= zjs.bell.bellArray[2].etime) {
              dtime = zjs.bell.bellArray[2].etime - etime; // 発表残り時間(ミリ秒)
@@ -1217,7 +1221,7 @@ zjs.screen = {
          setLongwise();
      }
 
-     // 時間表示方法の変更(引数は0,1,2)
+     // 時間表示方法の変更(引数は0,1,2,3)
      function changeTimeColorLabel(index) {
          prop.color.index = index;
          prop.color.array = prop.color.base[prop.color.index];
@@ -1300,12 +1304,15 @@ zjs.screen = {
 <span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">分</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">秒</span>
 </div>
 <div id="button">
-<input id="buttonstart" type="button" value="開始" onclick="zjs.clock.startClock()" style="display:inline"><input id="buttonstop" type="button" value="停止" onclick="zjs.clock.stopClock()" style="display:none"><input id="buttonreset" type="button" value="リセット" onclick="zjs.clock.resetClock()" style="display:inline"><input id="buttoncount" type="button" value="&lt;1&gt;" onclick="zjs.clock.markTimeOrDisplayLog()" style="display:inline">
+<input id="buttonstart" type="button" value="開始" onclick="zjs.clock.startClock()" style="display:inline">
+<input id="buttonstop" type="button" value="停止" onclick="zjs.clock.stopClock()" style="display:none">
+<input id="buttonreset" type="button" value="リセット" onclick="zjs.clock.resetClock()" style="display:inline">
+<input id="buttoncount" type="button" value="&lt;1&gt;" onclick="zjs.clock.markTimeOrDisplayLog()" style="display:inline">
 </div>
 <div id="config">
 <table border="0" id="config_table">
-<tr id="timetr2">
-<th>発表時間</th>
+  <tr id="timetr2">
+    <th>発表時間</th>
     <td> </td>
     <td>
 <input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒</td>
@@ -1315,8 +1322,8 @@ zjs.screen = {
 <option value="3">3</option></select>
 </td>
   </tr>
-<tr id="timetr0">
-<th id="cfglabel0">予鈴1</th>
+  <tr id="timetr0">
+    <th id="cfglabel0">予鈴1</th>
     <td>発表終了</td>
     <td>
 <input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒前</td>
@@ -1326,8 +1333,8 @@ zjs.screen = {
 <option value="3">3</option></select>
 </td>
   </tr>
-<tr id="timetr1">
-<th>予鈴2</th>
+  <tr id="timetr1">
+    <th>予鈴2</th>
     <td>発表終了</td>
 <td>
 <input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒前</td>
@@ -1337,8 +1344,8 @@ zjs.screen = {
 <option value="3">3</option></select>
 </td>
   </tr>
-<tr id="timetr3">
-<th>質疑時間</th>
+  <tr id="timetr3">
+    <th>質疑時間</th>
     <td> </td>
     <td>
 <input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">分<input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)">秒</td>
@@ -1348,25 +1355,32 @@ zjs.screen = {
 <option value="3" selected>3</option></select>
 </td>
   </tr>
-<tr>
-<td colspan="4">
-      <input type="button" value="設定を変更する" onclick="zjs.board.getForm();zjs.clock.resetClock()"><input type="button" value="設定を元に戻す" onclick="zjs.board.setForm()"><input type="button" value="時間表示の切替" onclick="zjs.screen.toggleTimeColorLabel()"><input type="button" value="準備OK?" onclick="zjs.board.showAdvice()" style="background-color:#9cf">
-</td>
+  <tr>
+    <td colspan="4">
+      <input type="button" value="設定を変更する" onclick="zjs.board.getForm();zjs.clock.resetClock()">
+      <input type="button" value="設定を元に戻す" onclick="zjs.board.setForm()">
+      <input type="button" value="時間表示の切替" onclick="zjs.screen.toggleTimeColorLabel()">
+      <input type="button" value="準備OK?" onclick="zjs.board.showAdvice()" style="background-color:#9cf">
+    </td>
   </tr>
-<tr>
-<td colspan="4">
-      <input type="button" value="はじめにお読みください" onclick="zjs.board.displayReadme()"><input type="button" value="ショートカットキー" onclick="zjs.board.displayKeybind()"><input id="Dbutton_log" type="button" value="ログ" onclick="zjs.board.displayLog()">
-</td>
+  <tr>
+    <td colspan="4">
+      <input type="button" value="はじめにお読みください" onclick="zjs.board.displayReadme()">
+      <input type="button" value="ショートカットキー" onclick="zjs.board.displayKeybind()">
+      <input id="Dbutton_log" type="button" value="ログ" onclick="zjs.board.displayLog()">
+    </td>
   </tr>
-<tr id="belltest">
-<td colspan="4">
-      <input type="button" value="ベル1" onclick="zjs.bell.ring(1)"><input type="button" value="ベル2" onclick="zjs.bell.ring(2)"><input type="button" value="ベル3" onclick="zjs.bell.ring(3)">
-</td>
+  <tr id="belltest">
+    <td colspan="4">
+      <input type="button" value="ベル1" onclick="zjs.bell.ring(1)">
+      <input type="button" value="ベル2" onclick="zjs.bell.ring(2)">
+      <input type="button" value="ベル3" onclick="zjs.bell.ring(3)">
+    </td>
   </tr>
 </table>
 <div id="readme" style="display:none">
 <ul>
-<li>
+  <li>
 <a href="http://www.vector.co.jp/soft/win95/personal/se236898.html">学会たいま〜 座長の友</a> をJavaScriptで実現してみました。時間は秒単位で指定できます。</li>
   <li id="readme_key">マウスのほか、キーボードでも操作ができます。テンキーをご使用の際は、あらかじめ、Num Lockがオンになっているかご確認ください。</li>
   <li>「リセット」のボタンは、内部で持つ経過時間の情報をリセットするだけです。フォームの情報を反映させるには、「設定を変更する」のボタンを押してください。</li>
@@ -1386,7 +1400,8 @@ zjs.screen = {
 [3] [M]: 数字拡大<br>
 [7] [K]: （停止時）ショートカットキーの表示/非表示<br>
 [8] [P]: 時間表示の切替<br>
-[9] [H]: 「はじめにお読みください」の表示/非表示<br><span id="keybind_rehearsal">[2] [.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。<br></span>
+[9] [H]: 「はじめにお読みください」の表示/非表示<br>
+<span id="keybind_rehearsal">[2] [.]: カウント時は、経過時間の記録。停止時は、ログの表示/非表示。発表練習でご活用ください。<br></span>
 <span id="keybind_magnify">[B]: （停止時）ボタンなどのサイズ変更（120%→150%→200%→100%→120%→…）<br></span>
 [G]: 砂時計モードの表示/非表示
 </div>
