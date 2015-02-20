@@ -159,7 +159,7 @@ zjs.config = {
 
              if (ua.indexOf("Opera") >= 0) {
                  prop.userAgent = "opera";
-             } else if (ua.indexOf("MSIE") >= 0) {
+             } else if (ua.indexOf("MSIE") >= 0 || ua.indexOf("Trident") >= 0) {
                  prop.userAgent = "msie";
              } else if (ua.indexOf("Firefox") >= 0) {
                  prop.userAgent = "firefox";
@@ -971,7 +971,7 @@ zjs.screen = {
 (function () {
      var prop = zjs.screen;
 
-     prop.color.base = new Array(zjs.config.colorArray1, zjs.config.colorArray2, zjs.config.colorArray1, zjs.config.colorArray1);
+     prop.color.base = new Array(zjs.config.colorArray1, zjs.config.colorArray2, zjs.config.colorArray1, zjs.config.colorArray2);
      prop.color.array = prop.color.base[prop.color.index];
      prop.timeColor = prop.color.array[0].timeColor;
      prop.statusLabel = prop.color.array[0].statusLabel;

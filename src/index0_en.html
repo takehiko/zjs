@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="ja">
+<head>
+<meta name="author" content="Takehiko Murakawa">
+<meta name="copyright" content="(c) 2008-2010 Takehiko Murakawa">
+<meta name="reply-to" content="takehiko@sys.wakayama-u.ac.jp">
+<meta name="date" content="Fri, 20 Aug 2010 05:10:53 +0900">
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>zjs</title>
+<style type="text/css">
+body {background-color:black;margin:0;position:relative}
+input, select {font-size:100%}
+#config table {background-color:#cc9; padding:1ex}
+#readme {background-color:#c96; padding:1ex; font-size:small}
+#keybind,#iv_keybind {background-color:#cc3; padding:1ex; font-size:small}
+#log {background-color:#6c9; padding:1ex; font-size:small}
+.minsecform {text-align:right}
+#sand {z-index:1; display:none; position:absolute; left:0px; top:0px; width:100%; height:1px; background-color:black}
+#disp {z-index:2; position:relative; padding:6px}
+</style>
+<script type="text/javascript" src="z_en.js"></script>
+</head>
+<body id="body" onload="zjs.config.init()" onresize="zjs.screen.resize()">
+<div id="sand"></div>
+<div id="disp">
+<div id="debugmessage" style="color:#ff6;font-weight:bold;display:none"></div>
+<div id="timestatus" style="color:#ff6;font-weight:bold" ondblclick="zjs.clock.resetClock()">Pause</div>
+<div id="time" style="color:#0f0;font-weight:bold;text-align:center" onclick="zjs.clock.toggleClock()">
+<span id="timemin" style="font-size:200pt">03</span><span id="timeminlabel">min</span><span id="timesec" style="font-size:200pt">00</span><span id="timeseclabel">sec</span>
+</div>
+<div id="button">
+<input id="buttonstart" type="button" value="Start" onclick="zjs.clock.startClock()" style="display:inline">
+<input id="buttonstop" type="button" value="Stop" onclick="zjs.clock.stopClock()" style="display:none">
+<input id="buttonreset" type="button" value="Reset" onclick="zjs.clock.resetClock()" style="display:inline">
+<input id="buttoncount" type="button" value="&lt;1&gt;" onclick="zjs.clock.markTimeOrDisplayLog()" style="display:inline">
+</div>
+<div id="config">
+<table border="0" id="config_table">
+  <tr id="timetr2">
+    <th>Talk time</th>
+    <td> </td>
+    <td>
+<input id="cfgmin2" class="minsecform" type="text" value="15" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec2" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec</span>
+</td>
+    <td id="bellsort2">
+<span> / Bell</span> <select id="cfgwav2"><option value="0">None</option>
+<option value="1">1</option>
+<option value="2" selected>2</option>
+<option value="3">3</option></select>
+</td>
+  </tr>
+  <tr id="timetr0">
+    <th id="cfglabel0">Prior bell 1</th>
+    <td></td>
+    <td>
+<input id="cfgmin0" class="minsecform" type="text" value="3" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec0" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec <span style="font-size:75%">before finishing talk</span></span>
+</td>
+    <td id="bellsort0">
+<span> / Bell</span> <select id="cfgwav0"><option value="0">None</option>
+<option value="1" selected>1</option>
+<option value="2">2</option>
+<option value="3">3</option></select>
+</td>
+  </tr>
+  <tr id="timetr1">
+    <th>Prior bell 2</th>
+    <td></td>
+<td>
+<input id="cfgmin1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec1" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec <span style="font-size:75%">before finishing talk</span></span>
+</td>
+    <td id="bellsort1">
+<span> / Bell</span> <select id="cfgwav1"><option value="0" selected>None</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option></select>
+</td>
+  </tr>
+  <tr id="timetr3">
+    <th>Q&amp;A time</th>
+    <td> </td>
+    <td>
+<input id="cfgmin3" class="minsecform" type="text" value="5" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>min</span><input id="cfgsec3" class="minsecform" type="text" value="0" size="6" onfocus="zjs.board.fT(this)" onblur="zjs.board.bT(this)"><span>sec</span>
+</td>
+    <td id="bellsort3">
+<span> / Bell</span> <select id="cfgwav3"><option value="0">None</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3" selected>3</option></select>
+</td>
+  </tr>
+  <tr>
+    <td colspan="4">
+      <input type="button" value="Set form" onclick="zjs.board.getForm();zjs.clock.resetClock()">
+      <input type="button" value="Revert form" onclick="zjs.board.setForm()">
+      <input type="button" value="Change count-up/down" onclick="zjs.screen.toggleTimeColorLabel()">
+      <input type="button" value="Ready?" onclick="zjs.board.showAdvice()" style="background-color:#9cf">
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4">
+      <input type="button" value="Read me first" onclick="zjs.board.displayReadme()">
+      <input type="button" value="Shortcut keys" onclick="zjs.board.displayKeybind()">
+      <input id="Dbutton_log" type="button" value="Log" onclick="zjs.board.displayLog()">
+    </td>
+  </tr>
+  <tr id="belltest">
+    <td colspan="4">
+      <input type="button" value="Bell 1" onclick="zjs.bell.ring(1)">
+      <input type="button" value="Bell 2" onclick="zjs.bell.ring(2)">
+      <input type="button" value="Bell 3" onclick="zjs.bell.ring(3)">
+    </td>
+  </tr>
+</table>
+<div id="readme" style="display:none">
+<ul>
+  <li>This is for managing the presenter's time on the second time scale. It is expected to be used in academic meetings or thesis defenses.</li>
+  <li id="readme_key">You can use this timer not only by mouse but also by keyboard. It is ready for a numerical-keypad operation, too, but pay attention to Num Lock.</li>
+  <li>When you push the "Reset" button above the control panel, the elapsed time is brought back to zero. If you would like to reflect your entries of the form, push the "Set form" button on the board. These operations are permitted only under suspension.</li>
+  <li id="readme_ring">The HTML file itself works. But you can play the sounds or give the bell a ring if you have wav files.</li>
+  <li id="iv_readme_ring" style="display:none">The HTML file itself works. But you can play the sounds or give the bell a ring, if you have wav files and change "ringMode: 0," of this file into "ringMode: null,".</li>
+  <li id="readme_rehearsal">"Rehearsal mode" is activated. After you put the button to the right of "Stop" button, the number increases and the time is kept inside. You can afterward look at the elapsed times slide by slide or scene by scene, with "Log" button.</li>
+  <li>The initial character of "zjs" was named after "Zacho No Tomo" ("Chairperson's Companion", forcibly translated into English), a Windows application created by Mr. Tomohiko Imachi. I implemented the features of Zacho No Tomo by JavaScript at first, and have set in various useful functions from my own standpoint to be a comprehensive clock register.</li>
+  <li>The latest and old versions of this file are available through <a href="http://github.com/takehiko/zjs/">GitHub</a>.</li>
+</ul>
+</div>
+<!-- id="readme" -->
+<div id="keybind" style="display:none">
+[5] [Z] [SPC]: Start, stop, or resume the clock.<br>
+[0] [X] [Esc]: Reset the clock (by double-hit in pausing).<br>
+[A],[S],[D]: Ring the bell (by double-hit).<br>
+[1] [N]: Shorten the clock display.<br>
+[3] [M]: Enlarge the clock display.<br>
+[7] [K]: Turn on/off the shortcut instruction.<br>
+[8] [P]: Change the count-up/down mode.<br>
+[9] [H]: Turn on/off the readme.<br>
+<span id="keybind_rehearsal">[2] [.]: Turn on/off the log (in pausing). Record the clock time (in counting). Use it at rehearsal.<br></span>
+<span id="keybind_magnify">[B]: Change the size of buttons and some components (in pausing).<br></span>
+[G]: Change the hourglass mode.
+</div>
+<div id="iv_keybind" style="display:none">Keyboard operations are disabled.</div>
+<div id="log" style="display:none"></div>
+</div>
+<!-- id="config" -->
+<div id="sound"></div>
+</div>
+<div id="advice" style="display:none">Please make sure the screen is not black or
+a screen-saver does not start
+after you do nothing for a number of minutes.
+</div>
+</body>
+</html>

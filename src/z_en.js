@@ -29,67 +29,67 @@ zjs.config = {
         {
             // [0] 開始前
             "timeColor": "#0f0",
-            "statusLabel": "停止中"
+            "statusLabel": "Pause"
         }, {
             // [1] 予鈴1まで
             "timeColor": "#0f0",
-            "statusLabel": "発表残り時間"
+            "statusLabel": "Talking"
         }, {
             // [2] 予鈴2まで
             "timeColor": "#6f0",
-            "statusLabel": "発表残り時間"
+            "statusLabel": "Talking"
         }, {
             // [3] 発表終了まで
             "timeColor": "#cf0",
-            "statusLabel": "発表残り時間"
+            "statusLabel": "Talking"
         }, {
             // [4] 質疑中
             "timeColor": "#ff0",
-            "statusLabel": "質疑経過時間"
+            "statusLabel": "Q&amp;A"
         }, {
             // [5] 質疑時間超過
             "timeColor": "#f33",
-            "statusLabel": "質疑時間超過"
+            "statusLabel": "Overrun! Q&amp;A"
         }, {
             // [6] 発表時間超過
             "timeColor": "#f33",
-            "statusLabel": "発表時間超過"
+            "statusLabel": "Overrun! Talking"
         }),
 
     colorArray2: new Array( // 色セット2
         {
             // [0] 開始前
             "timeColor": "#0f0",
-            "statusLabel": "停止中"
+            "statusLabel": "Pause"
         }, {
             // [1] 予鈴1まで
             "timeColor": "#0f0",
-            "statusLabel": "発表時間"
+            "statusLabel": "Talking"
         }, {
             // [2] 予鈴2まで
             "timeColor": "#6f0",
-            "statusLabel": "発表時間"
+            "statusLabel": "Talking"
         }, {
             // [3] 発表終了まで
             "timeColor": "#cf0",
-            "statusLabel": "発表時間"
+            "statusLabel": "Talking"
         }, {
             // [4] 質疑中
             "timeColor": "#ff0",
-            "statusLabel": "質疑時間"
+            "statusLabel": "Q&amp;A"
         }, {
             // [5] 質疑時間超過
             "timeColor": "#f33",
-            "statusLabel": "質疑時間超過"
+            "statusLabel": "Overrun! Q&amp;A"
         }, {
             // [6] 発表時間超過
             "timeColor": "#f33",
-            "statusLabel": "発表時間超過"
+            "statusLabel": "Overrun! Talking"
         }),
 
     titleArray: new Array( // タイトルバー
-        "zjs: 発表時間はカウントダウン、質疑時間はカウントアップ",
-        "zjs: 発表・質疑の合計時間をカウントアップ",
+        "zjs: count-down mode while talking",
+        "zjs: count-up mode",
         "zjs",
         "zjs"
     ),
@@ -502,7 +502,7 @@ zjs.clock = {
              prop.etime1 = prop.etime1 + prop.etime2;
              prop.etime2 = 0;
 
-             document.getElementById("buttonstart").value = "再開";
+             document.getElementById("buttonstart").value = "Resume";
              zjs.screen.changeStyle("buttonstart", "display", "inline");
              zjs.screen.changeStyle("buttonstop", "display", "none");
              zjs.screen.changeStyle("buttonreset", "display", "inline");
@@ -544,7 +544,7 @@ zjs.clock = {
              zjs.screen.changeTimeColorLabel(zjs.config.colorIndex);
 
              zjs.screen.updateTitle();
-             document.getElementById("buttonstart").value = "開始";
+             document.getElementById("buttonstart").value = "Start";
              zjs.screen.changeStyle("buttonstart", "display", "inline");
              zjs.screen.changeStyle("buttonstop", "display", "none");
              zjs.screen.changeStyle("buttonreset", "display", "inline");
@@ -565,12 +565,12 @@ zjs.clock = {
          hour = time;
 
          if (hour > 0) {
-             str += "" + hour + "時間";
+             str += "" + hour + " hour ";
          }
          if (hour + min > 0) {
-             str += "" + (hour > 0 && min < 10 ? "0" : "") + min + "分";
+             str += "" + (hour > 0 && min < 10 ? "0" : "") + min + " min ";
          }
-         str += "" + (hour + min > 0 && sec < 10 ? "0" : "") + sec + "秒";
+         str += "" + (hour + min > 0 && sec < 10 ? "0" : "") + sec + " sec ";
          str += "<span style=\"font-size:75%\">" + (msec < 100 ? "0" : "") + (msec < 10 ? "0" : "") + msec + "</span>";
 
          return str;
